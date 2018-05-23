@@ -13,17 +13,47 @@ library(shiny)
 ui <- fluidPage(
    
    # Application title
-   titlePanel("Old Faithful Geyser Data"),
+   titlePanel("Burden of COPD"),
    
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
-         sliderInput("bins",
-                     "Number of bins:",
-                     min = 1,
-                     max = 50,
-                     value = 30)
+        selectInput("selectPlot", h4("Select Plot"), 
+                    choices = list("Prevalence" = "prev", 
+                                   "Cost" = "cost",
+                                   "Choice 3" = 3), selected = NA),
+        checkboxGroupInput("gender", 
+                           h4("Demographics"), 
+                           choices = list("all" = "all", 
+                                          "female" = "female", 
+                                          "male" = "male"),
+                           selected = NA
       ),
+      checkboxGroupInput("ageGroup", 
+                         h4("Age Group"), 
+                         choices = list("35-54" = 3554, 
+                                        "55-64" = 5564, 
+                                        "65-74" = 6574,
+                                        "74 and older" = 74),
+                         selected = NA
+      ),
+      
+         checkboxGroupInput("province", 
+                            h4("Provinces"), 
+                            choices = list("Alberta" = "AB", 
+                                           "British Columbia" = "BC", 
+                                           "Manitoba" = "MN",
+                                           "New Brunswick" = "NB",
+                                           "Newfoundland and Labrador" = "NL",
+                                           "Nova Scotia" = "NS",
+                                           "Ontario" = "ON",
+                                           "Prince Edward Island" = "PEI",
+                                           "Quebec" = "QC", 
+                                           "Saskatchewan" = "SK",
+                                           "Canada - Overall" = "CA"),
+                            selected = NA)
+      ),
+
       
       # Show a plot of the generated distribution
       mainPanel(
@@ -35,14 +65,7 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
    
-   output$distPlot <- renderPlot({
-      # generate bins based on input$bins from ui.R
-      x    <- faithful[, 2] 
-      bins <- seq(min(x), max(x), length.out = input$bins + 1)
-      
-      # draw the histogram with the specified number of bins
-      hist(x, breaks = bins, col = 'darkgray', border = 'white')
-   })
+
 }
 
 # Run the application 
