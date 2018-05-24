@@ -101,10 +101,12 @@ server <- function(input, output) {
   
   cost_plot <- reactive ({ 
     
-    
+   df <- BC_cost_hosp
+   mdf <- reshape2::melt(df, id.var = "Year")
+   
    p <- ggplot(BC_cost_hosp, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
-   cat(input$ageGroup) 
-   if ("male" %in% input$gender) {
+
+  if ("male" %in% input$gender) {
      if (3554 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male35), color = 1) }
      if (5564 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male55), color = 2) }
      if (6574 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male65), color = 3) }
@@ -118,12 +120,9 @@ server <- function(input, output) {
      if (75 %in% input$ageGroup) {p <- p + geom_line(aes(y = Female75), color = 8) }
    }
     
-      #+geom_line(aes(y = Female35)) +
-      # geom_line(aes(y = Male75), color="blue") +
-      # labs(x="year", y="COPD Cosy") +
-      # theme_bw() 
+      p <- p +  labs(x="year", y="COPD Cosy") + theme_bw() 
      
-     ggplotly (p)#%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
+     ggplotly (p) %>% layout(legend = list(orientation = "h")) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
     
