@@ -103,9 +103,11 @@ server <- function(input, output) {
     
    df <- BC_cost_hosp
    mdf <- reshape2::melt(df, id.var = "Year")
-   
-   p <- ggplot(BC_cost_hosp, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
+   mdf <- as.data.frame(mdf)
+   #p <- ggplot(BC_cost_hosp, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
 
+   p <- ggplot(mdf, aes(x = Year, y=value, colour = variable)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
+   
   if ("male" %in% input$gender) {
      if (3554 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male35), color = 1) }
      if (5564 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male55), color = 2) }
@@ -122,7 +124,7 @@ server <- function(input, output) {
     
       p <- p +  labs(x="year", y="COPD Cosy") + theme_bw() 
      
-     ggplotly (p) %>% layout(legend = list(orientation = "h")) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
+     ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
     
