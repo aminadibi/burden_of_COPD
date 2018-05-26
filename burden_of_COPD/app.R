@@ -12,6 +12,7 @@ library(shinythemes)
 library(ggplot2)
 library(plotly)
 library(XLConnect)
+library(directlabels)
 
 
 # Define UI for application that draws a histogram
@@ -37,10 +38,10 @@ ui <- fluidPage(
       ),
       checkboxGroupInput("ageGroup", 
                          h4("Age Group"), 
-                         choices = list("35-54" = 3554, 
-                                        "55-64" = 5564, 
-                                        "65-74" = 6574,
-                                        "75 and older" = 75),
+                         choices = list("35-54" = "35", 
+                                        "55-64" = "55", 
+                                        "65-74" = "65",
+                                        "75 and older" = "75"),
                          selected = NA
       ),
       
@@ -94,36 +95,59 @@ server <- function(input, output) {
   wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
   BC_cost_hosp <- readNamedRegion(wb, name = "BC_cost_hosp")
   
+  
   output$plot_cost <- renderPlotly({
     print (cost_plot())
   })
   
   
-  cost_plot <- reactive ({ 
+  filterdata <- observe ({
+    df <- BC_cost_hosp
+    filterCols <- "hey"
+    #cat("hey", input$gender)
+    if ("male" %in% input$gender) {
+       filterCols <-  paste0("Male", input$ageGroup)
+       if ("female" %in% input$gender) {
+         filterCols <-  paste0("Female", input$ageGroup)
+        }
+       cat(filterCols, "\n")
+    }
+     if (filterCols %in% colnames(df)) {
+      cat('ha ha')
+       filterCols <- cbine ("Year", filterCols)
+       df <- df[, filterCols]
+     }
+    #cat(print(df))
+    mdf <- reshape2::melt(df, id.var = "Year")
+    mdf <- as.data.frame(mdf)
+    # variableList <- ""
+    # mdf <- subset (mdf, variable =)
     
-   df <- BC_cost_hosp
-   mdf <- reshape2::melt(df, id.var = "Year")
-   mdf <- as.data.frame(mdf)
-   #p <- ggplot(BC_cost_hosp, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
+    
+  })
+  
+  cost_plot <- reactive ({ 
 
-   p <- ggplot(mdf, aes(x = Year, y=value, colour = variable)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
+   p <- ggplot(BC_cost_hosp, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
+   #p <- ggplot(df, aes(x = Year, y=value, colour = variable)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
    
   if ("male" %in% input$gender) {
-     if (3554 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male35), color = 1) }
-     if (5564 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male55), color = 2) }
-     if (6574 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male65), color = 3) }
-     if (75 %in% input$ageGroup) {p <- p + geom_line(aes(y = Male75), color = 4) }
+     if ("35" %in% input$ageGroup) {p <- p + geom_line(aes(y = Male35), color = 1) }
+     if ("55" %in% input$ageGroup) {p <- p + geom_line(aes(y = Male55), color = 2) }
+     if ("65" %in% input$ageGroup) {p <- p + geom_line(aes(y = Male65), color = 3) }
+     if ("75" %in% input$ageGroup) {p <- p + geom_line(aes(y = Male75), color = 4) }
    }
    
    if ("female" %in% input$gender) {
-     if (3554 %in% input$ageGroup) {p <- p + geom_line(aes(y = Female35), color = 5) }
-     if (5564 %in% input$ageGroup) {p <- p + geom_line(aes(y = Female55), color = 6) }
-     if (6574 %in% input$ageGroup) {p <- p + geom_line(aes(y = Female65), color = 7) }
-     if (75 %in% input$ageGroup) {p <- p + geom_line(aes(y = Female75), color = 8) }
+     if ("35" %in% input$ageGroup) {p <- p + geom_line(aes(y = Female35), color = 5) }
+     if ("55" %in% input$ageGroup) {p <- p + geom_line(aes(y = Female55), color = 6) }
+     if ("65" %in% input$ageGroup) {p <- p + geom_line(aes(y = Female65), color = 7) }
+     if ("75" %in% input$ageGroup) {p <- p + geom_line(aes(y = Female75), color = 8) }
    }
     
-      p <- p +  labs(x="year", y="COPD Cosy") + theme_bw() 
-     
+      p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
+      #direct.label(p, 'last.points')
+      
      ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
