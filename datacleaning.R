@@ -12,6 +12,14 @@ tidyCost <- function (province, type) {
   data %>% select (-total) %>% gather("genderage", "value", 2:9) %>% separate (genderage, into=c("gender", "age"))
 }
 
+tidyNumber <- function (province) {
+  wb <- loadWorkbook("./burden_of_COPD/Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
+  excelName <- paste0(province, "_number")
+  data <- readNamedRegion(wb, name = excelName)
+  data$province <- province
+  data %>% select (-total) %>% gather("genderage", "value", 2:9) %>% separate (genderage, into=c("gender", "age"))
+}
+
 #hosp
 cost <- tidyCost("BC", "hosp")
 cost <- rbind(cost, tidyCost("ON", "hosp"))
@@ -47,3 +55,15 @@ cost <- rbind(cost, tidyCost("NS", "pharm"))
 cost <- rbind(cost, tidyCost("PE", "pharm"))
 cost <- rbind(cost, tidyCost("QC", "pharm"))
 cost <- rbind(cost, tidyCost("SK", "pharm"))
+
+#Number
+copdNumber <-  tidyNumber("BC")
+copdNumber <- rbind(copdNumber, tidyNumber("ON"))
+copdNumber <- rbind(copdNumber, tidyNumber("AB"))
+copdNumber <- rbind(copdNumber, tidyNumber("MB"))
+copdNumber <- rbind(copdNumber, tidyNumber("NB"))
+copdNumber <- rbind(copdNumber, tidyNumber("NL"))
+copdNumber <- rbind(copdNumber, tidyNumber("NS"))
+copdNumber <- rbind(copdNumber, tidyNumber("PE"))
+copdNumber <- rbind(copdNumber, tidyNumber("QC"))
+copdNumber <- rbind(copdNumber, tidyNumber("SK"))
