@@ -31,7 +31,7 @@ ui <- fluidPage(
                            choices = list("all" = "all", 
                                           "female" = "Female", 
                                           "male" = "Male"),
-                           selected = "Female"
+                           selected = c("Female", "Male")
       ),
       checkboxGroupInput("ageGroup", 
                          h4("Age Group"), 
@@ -71,10 +71,10 @@ ui <- fluidPage(
                     
                     tabPanel("Cost",
                              selectInput("costType", h5("Cost Type"), 
-                                         choices = list("Total" = "total",
+                                         choices = list("Total" = "sum",
                                                         "Inpatient" = "hosp", 
                                                         "Outpatient" = "MSP",
-                                                        "Pharma" = "pharm"), selected = "hosp"),
+                                                        "Pharma" = "pharm"), selected = "sum"),
                              plotlyOutput("plot_cost"),
                              br(),
                              tableOutput("table_cost")

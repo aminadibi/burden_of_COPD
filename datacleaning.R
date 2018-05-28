@@ -56,6 +56,18 @@ cost <- rbind(cost, tidyCost("PE", "pharm"))
 cost <- rbind(cost, tidyCost("QC", "pharm"))
 cost <- rbind(cost, tidyCost("SK", "pharm"))
 
+#sum of the above three types
+cost <- rbind(cost, tidyCost("BC", "sum"))
+cost <- rbind(cost, tidyCost("ON", "sum"))
+cost <- rbind(cost, tidyCost("AB", "sum"))
+cost <- rbind(cost, tidyCost("MB", "sum"))
+cost <- rbind(cost, tidyCost("NB", "sum"))
+cost <- rbind(cost, tidyCost("NL", "sum"))
+cost <- rbind(cost, tidyCost("NS", "sum"))
+cost <- rbind(cost, tidyCost("PE", "sum"))
+cost <- rbind(cost, tidyCost("QC", "sum"))
+cost <- rbind(cost, tidyCost("SK", "sum"))
+
 #Number
 copdNumber <-  tidyNumber("BC")
 copdNumber <- rbind(copdNumber, tidyNumber("ON"))
@@ -67,3 +79,7 @@ copdNumber <- rbind(copdNumber, tidyNumber("NS"))
 copdNumber <- rbind(copdNumber, tidyNumber("PE"))
 copdNumber <- rbind(copdNumber, tidyNumber("QC"))
 copdNumber <- rbind(copdNumber, tidyNumber("SK"))
+
+#save
+cost <- write_rds(cost, "./cost.rds")
+copdNumber <- write_rds(copdNumber, "./copdNumber.rds")
