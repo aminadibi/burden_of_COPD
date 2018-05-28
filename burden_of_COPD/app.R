@@ -74,11 +74,11 @@ ui <- fluidPage(
                     ),
                     
                     tabPanel("Cost",
-                             selectInput("select", h5("Cost Type"), 
+                             selectInput("costType", h5("Cost Type"), 
                                          choices = list("Total" = "total",
-                                                        "Inpatient" = "in", 
-                                                        "Outpatient" = "out",
-                                                        "Pharma" = "pharma"), selected = NA),
+                                                        "Inpatient" = "hosp", 
+                                                        "Outpatient" = "MSP",
+                                                        "Pharma" = "pharm"), selected = "hosp"),
                              plotlyOutput("plot_cost"),
                              br(),
                              tableOutput("table_cost")
@@ -141,7 +141,7 @@ server <- function(input, output) {
   cost_plot <- reactive ({ 
 
    #p <- ggplot(cost, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
-   p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type == "hosp"))), aes(x = Year, y=value, color = province)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
+   p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type %in% input$costType))), aes(x = Year, y=value, color = province)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
    p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
       #direct.label(p, 'last.points')
       
@@ -154,7 +154,7 @@ server <- function(input, output) {
    })
   
   n_copd_plot <- reactive ({ 
-    p <- ggplot(mdfNumber, aes(x = Year, y=value, colour = variable)) + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
+    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = province)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
     p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
     #direct.label(p, 'last.points')
     ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
