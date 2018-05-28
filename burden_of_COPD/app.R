@@ -13,6 +13,7 @@ library(ggplot2)
 library(plotly)
 library(XLConnect)
 library(directlabels)
+library(tidyverse)
 
 
 # Define UI for application that draws a histogram
@@ -32,9 +33,9 @@ ui <- fluidPage(
         checkboxGroupInput("gender", 
                            h4("Demographics"), 
                            choices = list("all" = "all", 
-                                          "female" = "female", 
-                                          "male" = "male"),
-                           selected = NA
+                                          "female" = "Female", 
+                                          "male" = "Male"),
+                           selected = "Female"
       ),
       checkboxGroupInput("ageGroup", 
                          h4("Age Group"), 
@@ -42,7 +43,7 @@ ui <- fluidPage(
                                         "55-64" = "55", 
                                         "65-74" = "65",
                                         "75 and older" = "75"),
-                         selected = NA
+                         selected = "65"
       ),
       
          checkboxGroupInput("province", 
@@ -58,7 +59,7 @@ ui <- fluidPage(
                                            "Quebec" = "QC", 
                                            "Saskatchewan" = "SK",
                                            "Canada - Overall" = "CA"),
-                            selected = NA)
+                            selected = "BC")
       ),
 
       
@@ -91,10 +92,11 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-   
-  wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
-  BC_cost_hosp <- readNamedRegion(wb, name = "BC_cost_hosp")
-  
+   cost <- read_rds("../cost.rds")
+   copdNumber <- read_rds("../copdNumber.rds")
+  # wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
+  # BC_cost_hosp <- readNamedRegion(wb, name = "BC_cost_hosp")
+  # 
   
   output$plot_cost <- renderPlotly({
     print (cost_plot())
@@ -102,24 +104,34 @@ server <- function(input, output) {
   
   
   filterdata <- observe ({
-    df <- BC_cost_hosp
-    filterCols <- "hey"
-    #cat("hey", input$gender)
     if ("male" %in% input$gender) {
-       filterCols <-  paste0("Male", input$ageGroup)
-       if ("female" %in% input$gender) {
-         filterCols <-  paste0("Female", input$ageGroup)
-        }
-       cat(filterCols, "\n")
+       #filterCols <-  paste0("Male", input$ageGroup)
+      dfCost <- filter(cost, gender == "Male")
+    } else {
+      
     }
-     if (filterCols %in% colnames(df)) {
-      cat('ha ha')
-       filterCols <- cbine ("Year", filterCols)
-       df <- df[, filterCols]
-     }
-    #cat(print(df))
-    mdf <- reshape2::melt(df, id.var = "Year")
-    mdf <- as.data.frame(mdf)
+       
+    if ("female" %in% input$gender) {
+         dfCost <- filter(cost, gender == "Female")
+    }
+    
+    if ("35" %in% input$ageGroup) {
+      cost <- filter(cost, age == "35")
+    }
+    
+    if ("55" %in% input$ageGroup) {
+      cost <- filter(cost, age == "55")
+    }
+ 
+    if ("75" %in% input$ageGroup) {
+      cost <<- filter(cost, age == "75")
+    }
+    
+    mdfCost <- reshape2::melt(cost, id.var = "Year")
+    mdfNumber <- reshape2::melt(copdNumber, id.var = "Year")
+    mdfCost <- as.data.frame(mdfCost)
+    mdfNumber <- as.data.frame(mdfNumber)
+    
     # variableList <- ""
     # mdf <- subset (mdf, variable =)
     
@@ -128,46 +140,24 @@ server <- function(input, output) {
   
   cost_plot <- reactive ({ 
 
-   p <- ggplot(BC_cost_hosp, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
-   #p <- ggplot(df, aes(x = Year, y=value, colour = variable)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
-   
-  if ("male" %in% input$gender) {
-     if ("35" %in% input$ageGroup) {p <- p + geom_line(aes(y = Male35), color = 1) }
-     if ("55" %in% input$ageGroup) {p <- p + geom_line(aes(y = Male55), color = 2) }
-     if ("65" %in% input$ageGroup) {p <- p + geom_line(aes(y = Male65), color = 3) }
-     if ("75" %in% input$ageGroup) {p <- p + geom_line(aes(y = Male75), color = 4) }
-   }
-   
-   if ("female" %in% input$gender) {
-     if ("35" %in% input$ageGroup) {p <- p + geom_line(aes(y = Female35), color = 5) }
-     if ("55" %in% input$ageGroup) {p <- p + geom_line(aes(y = Female55), color = 6) }
-     if ("65" %in% input$ageGroup) {p <- p + geom_line(aes(y = Female65), color = 7) }
-     if ("75" %in% input$ageGroup) {p <- p + geom_line(aes(y = Female75), color = 8) }
-   }
-    
-      p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
+   #p <- ggplot(cost, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
+   p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type == "hosp"))), aes(x = Year, y=value)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
+   p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
       #direct.label(p, 'last.points')
       
-     ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
+   ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
     
-  output$plot_n_COPD <- renderPlotly({
-    print (n_copd_plot())
-  })
+   output$plot_n_COPD <- renderPlotly({
+     print (n_copd_plot())
+   })
   
   n_copd_plot <- reactive ({ 
-    
-    #readNamedRegion(wb, name = "BC_cost_hosp")
-    
-    # p <- ggplot(GLOBAL_prediction_results_fev1, aes(year)) + geom_line(aes(y = percentpred), color=lineColorSmoker, linetype=1) +
-    #   geom_ribbon(aes(ymin=percentpred_lowerbound_PI, ymax=percentpred_upperbound_PI), linetype=2, alpha=0.1, fill=lineColorSmoker) +
-    #   geom_line(aes(y = percentpred_lowerbound_PI), color=errorLineColorSmoker, linetype=2) +
-    #   geom_line(aes(y = percentpred_upperbound_PI), color=errorLineColorSmoker, linetype=2) +
-    #   labs(x=xlab, y="Number of COPD") +
-    #   theme_bw() 
-    # 
-    # ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
+    p <- ggplot(mdfNumber, aes(x = Year, y=value, colour = variable)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
+    p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
+    #direct.label(p, 'last.points')
+    ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
 }
