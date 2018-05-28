@@ -25,10 +25,6 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
-#        selectInput("selectPlot", h4("Select Plot"), 
-#                    choices = list("Prevalence" = "prev", 
-#                                   "Cost" = "cost"), 
-#                                   selected = NA),
         
         checkboxGroupInput("gender", 
                            h4("Demographics"), 
@@ -94,9 +90,10 @@ ui <- fluidPage(
 server <- function(input, output) {
    cost <- read_rds("../cost.rds")
    copdNumber <- read_rds("../copdNumber.rds")
+   buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
+   
   # wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
-  # BC_cost_hosp <- readNamedRegion(wb, name = "BC_cost_hosp")
-  # 
+
   
   output$plot_cost <- renderPlotly({
     print (cost_plot())
@@ -104,48 +101,16 @@ server <- function(input, output) {
   
   
   filterdata <- observe ({
-    if ("male" %in% input$gender) {
-       #filterCols <-  paste0("Male", input$ageGroup)
-      dfCost <- filter(cost, gender == "Male")
-    } else {
-      
-    }
-       
-    if ("female" %in% input$gender) {
-         dfCost <- filter(cost, gender == "Female")
-    }
-    
-    if ("35" %in% input$ageGroup) {
-      cost <- filter(cost, age == "35")
-    }
-    
-    if ("55" %in% input$ageGroup) {
-      cost <- filter(cost, age == "55")
-    }
- 
-    if ("75" %in% input$ageGroup) {
-      cost <<- filter(cost, age == "75")
-    }
-    
-    mdfCost <- reshape2::melt(cost, id.var = "Year")
-    mdfNumber <- reshape2::melt(copdNumber, id.var = "Year")
-    mdfCost <- as.data.frame(mdfCost)
-    mdfNumber <- as.data.frame(mdfNumber)
-    
-    # variableList <- ""
-    # mdf <- subset (mdf, variable =)
-    
     
   })
   
   cost_plot <- reactive ({ 
-
-   #p <- ggplot(cost, aes(x = Year)) #+ geom_line(aes(y = Male35), color="salmon") 
-   p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type %in% input$costType))), aes(x = Year, y=value, color = province)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
-   p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
+   cost$Legend <- interaction(cost$province, cost$gender, cost$age)
+   p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type %in% input$costType))), aes(x = Year, y=value/1000000, color = Legend)) + geom_point() + geom_line()  
+   p <- p +  labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw() 
       #direct.label(p, 'last.points')
       
-   ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
+   ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
     
@@ -154,10 +119,11 @@ server <- function(input, output) {
    })
   
   n_copd_plot <- reactive ({ 
-    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = interaction(province, gender))) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
-    p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
+    copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age)
+    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = Legend)) + geom_point() + geom_line() 
+    p <- p +  labs(x="Year", y="") + scale_y_continuous(labels = scales::comma) + theme_bw() 
     #direct.label(p, 'last.points')
-    ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
+    ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
 }
