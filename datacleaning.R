@@ -81,5 +81,5 @@ copdNumber <- rbind(copdNumber, tidyNumber("QC"))
 copdNumber <- rbind(copdNumber, tidyNumber("SK"))
 
 #save
-cost <- write_rds(cost, "./cost.rds")
-copdNumber <- write_rds(copdNumber, "./copdNumber.rds")
+cost <- write_rds(cost, "./burden_of_COPD/cost.rds")
+copdNumber <- write_rds(copdNumber, "./burden_of_COPD/copdNumber.rds")

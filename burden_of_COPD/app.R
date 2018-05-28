@@ -88,8 +88,8 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-   cost <- read_rds("../cost.rds")
-   copdNumber <- read_rds("../copdNumber.rds")
+   cost <- read_rds("./cost.rds")
+   copdNumber <- read_rds("./copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
    
   # wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
