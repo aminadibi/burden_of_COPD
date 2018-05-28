@@ -154,7 +154,7 @@ server <- function(input, output) {
    })
   
   n_copd_plot <- reactive ({ 
-    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = province)) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
+    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = interaction(province, gender))) + geom_point() + geom_line() #+ geom_line(aes(y = Male35), color="salmon") 
     p <- p +  labs(x="year", y="COPD Cost") + theme_bw() 
     #direct.label(p, 'last.points')
     ggplotly (p) #%>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
