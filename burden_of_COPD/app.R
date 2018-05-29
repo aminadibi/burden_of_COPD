@@ -68,9 +68,12 @@ ui <- fluidPage(
                     tabPanel("Number of Cases",
                              plotlyOutput("plot_n_COPD"),
                              br(),
-                             tableOutput("table_n_COPD")   
+                             tableOutput("table_n_COPD"), 
+                             br(), br(),
+                             div(id = "SaveLoad",
+                                 downloadButton("download_plot_n", "Download Plot")   
                              
-                    ),
+                    )),
                     
                     tabPanel("Cost",
                              selectInput("costType", h5("Cost Type"), 
@@ -80,18 +83,17 @@ ui <- fluidPage(
                                                         "Pharma" = "pharm"), selected = "sum"),
                              plotlyOutput("plot_cost"),
                              br(),
-                             tableOutput("table_cost")
+                             tableOutput("table_cost"), 
+                             br(), br(),
+                             div(id = "SaveLoad",
+                                 downloadButton("download_plot_cost", "Download Plot")
                              
-                            ),
+                            )),
                     tabPanel("Terms",  includeMarkdown("./disclaimer.rmd")),
                     tabPanel("About",  includeMarkdown("./about.rmd"), 
                              imageOutput("logos"))
 
-                  ), 
-        br(), br(),
-        div(id = "SaveLoad",
-            downloadButton("download_plot", "Download Plot")
-        )  
+        )
      )
   )
 )
@@ -102,9 +104,18 @@ server <- function(input, output, session) {
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
    
   # wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
-   output$download_plot = downloadHandler(
+   output$download_plot_n = downloadHandler(
      filename = function() {
-       paste("Burden_of_COPD_", Sys.Date(), ".png", sep="")
+       paste("COPD_Projected_Prevalence_", Sys.Date(), ".png", sep="")
+     },    content = function(file) {
+       ggsave(file, device = "png", width=11, height=8.5)
+       
+     }
+   )
+   
+   output$download_plot_cost = downloadHandler(
+     filename = function() {
+       paste("COPD_Projected_cost_", Sys.Date(), ".png", sep="")
      },    content = function(file) {
        ggsave(file, device = "png", width=11, height=8.5)
        
@@ -132,7 +143,7 @@ server <- function(input, output, session) {
   
   n_copd_plot <- reactive ({ 
     copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age)
-    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = Legend)) + geom_point() + geom_line()
+    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = Legend)) + geom_point() + geom_line() + theme_bw() 
 
 
     ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
