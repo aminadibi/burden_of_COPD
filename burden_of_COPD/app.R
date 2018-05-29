@@ -28,7 +28,7 @@ ui <- fluidPage(
         
         checkboxGroupInput("gender", 
                            h4("Demographics"), 
-                           choices = list("all" = "all", 
+                           choices = list(
                                           "female" = "Female", 
                                           "male" = "Male"),
                            selected = c("Female", "Male")
