@@ -65,7 +65,13 @@ ui <- fluidPage(
                     tabPanel("Number of Cases",
                              plotlyOutput("plot_n_COPD"),
                              br(),
-                             tableOutput("table_n_COPD")
+                             tableOutput("table_n_COPD"),
+                             br(), br(), icon("floppy-o"),"  ",
+                             a(id = "toggleSaveLoad", "Save Plot/Data", href = "#"),
+                             shinyjs::hidden(
+                               div(id = "SaveLoad",
+                                   downloadButton("download_plot", "Download Plot")
+                               ))      
                              
                     ),
                     
@@ -94,15 +100,21 @@ server <- function(input, output) {
    
   # wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
 
-  
+   shinyjs::onclick("toggleSaveLoad",
+                    shinyjs::toggle(id = "SaveLoad", anim = TRUE)) 
+   
   output$plot_cost <- renderPlotly({
     print (cost_plot())
   })
   
   
-  filterdata <- observe ({
-    
-  })
+  output$download_plot = downloadHandler(
+    filename = function() {"plots.pdf"},
+    content = function(file) {
+      ggsave(file, device = "png", width=11, height=8.5)
+      
+    }
+  )
   
   cost_plot <- reactive ({ 
    cost$Legend <- interaction(cost$province, cost$gender, cost$age)
