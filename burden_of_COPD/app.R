@@ -65,13 +65,7 @@ ui <- fluidPage(
                     tabPanel("Number of Cases",
                              plotlyOutput("plot_n_COPD"),
                              br(),
-                             tableOutput("table_n_COPD"),
-                             br(), br(), icon("floppy-o"),"  ",
-                             a(id = "toggleSaveLoad", "Save Plot/Data", href = "#"),
-                             shinyjs::hidden(
-                               div(id = "SaveLoad",
-                                   downloadButton("download_plot", "Download Plot")
-                               ))      
+                             tableOutput("table_n_COPD")   
                              
                     ),
                     
@@ -87,34 +81,35 @@ ui <- fluidPage(
                              
                             )
 
-                  )
+                  ), 
+        br(), br(),
+        div(id = "SaveLoad",
+            downloadButton("download_plot", "Download Plot")
+        )  
      )
   )
 )
 
-# Define server logic required to draw a histogram
 server <- function(input, output) {
    cost <- read_rds("./cost.rds")
    copdNumber <- read_rds("./copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
    
   # wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
+   output$download_plot = downloadHandler(
+     filename = function() {
+       paste("Burden_of_COPD_", Sys.Date(), ".png", sep="")
+     },    content = function(file) {
+       ggsave(file, device = "png", width=11, height=8.5)
+       
+     }
+   )
 
-   shinyjs::onclick("toggleSaveLoad",
-                    shinyjs::toggle(id = "SaveLoad", anim = TRUE)) 
    
   output$plot_cost <- renderPlotly({
     print (cost_plot())
   })
   
-  
-  output$download_plot = downloadHandler(
-    filename = function() {"plots.pdf"},
-    content = function(file) {
-      ggsave(file, device = "png", width=11, height=8.5)
-      
-    }
-  )
   
   cost_plot <- reactive ({ 
    cost$Legend <- interaction(cost$province, cost$gender, cost$age)
@@ -138,6 +133,8 @@ server <- function(input, output) {
     ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
+  
+  
 }
 
 # Run the application 
