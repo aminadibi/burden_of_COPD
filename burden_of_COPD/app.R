@@ -14,6 +14,9 @@ library(plotly)
 library(XLConnect)
 library(directlabels)
 library(tidyverse)
+library(rmarkdown) #for markdown file
+library(knitr) #for markdown file
+library(htmltools)
 
 
 # Define UI for application that draws a histogram
@@ -79,7 +82,10 @@ ui <- fluidPage(
                              br(),
                              tableOutput("table_cost")
                              
-                            )
+                            ),
+                    tabPanel("Terms",  includeMarkdown("./disclaimer.rmd")),
+                    tabPanel("About",  includeMarkdown("./about.rmd"), 
+                             imageOutput("logos"))
 
                   ), 
         br(), br(),
@@ -90,7 +96,7 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
    cost <- read_rds("./cost.rds")
    copdNumber <- read_rds("./copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
@@ -134,6 +140,15 @@ server <- function(input, output) {
     
   })
   
+  output$logos <- renderImage({
+    width  <- session$clientData$output_logos_width
+    height <- session$clientData$output_logos_height
+    # Return a list containing the filename
+    list(src = "./logos2.png",
+         contentType = 'image/png',
+         width = width,
+         alt = "This is alternate text")
+  }, deleteFile = FALSE)
   
 }
 
