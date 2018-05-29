@@ -13,7 +13,7 @@ library(ggplot2)
 library(plotly)
 library(XLConnect)
 library(directlabels)
-library(tidyverse)
+library(readr)
 library(rmarkdown) #for markdown file
 library(knitr) #for markdown file
 library(htmltools)
@@ -119,9 +119,8 @@ server <- function(input, output, session) {
   
   cost_plot <- reactive ({ 
    cost$Legend <- interaction(cost$province, cost$gender, cost$age)
-   p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type %in% input$costType))), aes(x = Year, y=value/1000000, color = Legend)) + geom_point() + geom_line()  
+   p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type %in% input$costType))), aes(x = Year, y=value/1000000, fill = Legend)) + geom_bar(stat = "identity")#+ geom_point() + geom_line()  
    p <- p +  labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw() 
-      #direct.label(p, 'last.points')
       
    ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
@@ -133,9 +132,9 @@ server <- function(input, output, session) {
   
   n_copd_plot <- reactive ({ 
     copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age)
-    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = Legend)) + geom_point() + geom_line() 
-    p <- p +  labs(x="Year", y="") + scale_y_continuous(labels = scales::comma) + theme_bw() 
-    #direct.label(p, 'last.points')
+    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = Legend)) + geom_point() + geom_line()
+
+
     ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
   })
