@@ -68,6 +68,23 @@ cost <- rbind(cost, tidyCost("PE", "sum"))
 cost <- rbind(cost, tidyCost("QC", "sum"))
 cost <- rbind(cost, tidyCost("SK", "sum"))
 
+#adding "all" row for province
+all_province <- cost %>% group_by(Year, age, gender, type) %>% summarize(value = sum(value))
+all_province$province <- "Canada"
+cost <- rbind(cost, as.data.frame(all_province))
+
+#adding "all" row for gender
+all_gender <- cost %>% group_by(Year, age, province, type) %>% summarize(value = sum(value))
+all_gender$gender <- "all"
+cost <- rbind(cost, as.data.frame(all_gender))
+
+#adding "all" row for age group
+all_age <- cost %>% group_by(Year, gender, province, type) %>% summarize(value = sum(value))
+all_age$age <- "all"
+cost <- rbind(cost, as.data.frame(all_age))
+
+
+
 #Number
 copdNumber <-  tidyNumber("BC")
 copdNumber <- rbind(copdNumber, tidyNumber("ON"))
@@ -79,6 +96,21 @@ copdNumber <- rbind(copdNumber, tidyNumber("NS"))
 copdNumber <- rbind(copdNumber, tidyNumber("PE"))
 copdNumber <- rbind(copdNumber, tidyNumber("QC"))
 copdNumber <- rbind(copdNumber, tidyNumber("SK"))
+
+#adding "all" row for province
+all_province <- copdNumber %>% group_by(Year, age, gender) %>% summarize(value = sum(value))
+all_province$province <- "Canada"
+copdNumber <- rbind(copdNumber, as.data.frame(all_province))
+
+#adding "all" row for gender
+all_gender <- copdNumber %>% group_by(Year, age, province) %>% summarize(value = sum(value))
+all_gender$gender <- "all"
+copdNumber <- rbind(copdNumber, as.data.frame(all_gender))
+
+#adding "all" row for age group
+all_age <- copdNumber %>% group_by(Year, gender, province) %>% summarize(value = sum(value))
+all_age$age <- "all"
+copdNumber <- rbind(copdNumber, as.data.frame(all_age))
 
 #save
 cost <- write_rds(cost, "./burden_of_COPD/cost.rds")

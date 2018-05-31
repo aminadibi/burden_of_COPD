@@ -38,7 +38,8 @@ ui <- fluidPage(
       checkboxGroupInput("gender", label = NA,
                            choices = list(
                                           "female" = "Female", 
-                                          "male" = "Male"),
+                                          "male" = "Male",
+                                          "all" = "all"),
                            selected = c("Female", "Male")
       )),
      
@@ -51,7 +52,8 @@ ui <- fluidPage(
                          choices = list("35-54" = "35", 
                                         "55-64" = "55", 
                                         "65-74" = "65",
-                                        "75 and older" = "75"),
+                                        "75 and older" = "75",
+                                        "all" = "all"),
                          selected = "65")),
       
           radioButtons("radioProvinces", "Province",
@@ -69,7 +71,10 @@ ui <- fluidPage(
                                            "Ontario" = "ON",
                                            "Prince Edward Island" = "PE",
                                            "Quebec" = "QC", 
-                                           "Saskatchewan" = "SK"),
+                                           "Saskatchewan" = "SK",
+                                           "Canada" = "Canada"
+                                           
+                                           ),
                             selected = "BC")
       )),
 
