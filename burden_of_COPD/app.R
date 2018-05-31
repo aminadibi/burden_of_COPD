@@ -29,36 +29,36 @@ ui <- fluidPage(
    sidebarLayout(
       sidebarPanel(
 
-          div(id = "radioShowGender", 
-          radioButtons("radioGender", "Gender",
+         
+      radioButtons("radioGender", "Gender",
                            c("all" = "All",
-                             "select" = "Select"))
-          ),               
+                             "select" = "Select")),
+      
+      div(id = "showGender",                 
       checkboxGroupInput("gender", label = NA,
                            choices = list(
                                           "female" = "Female", 
                                           "male" = "Male"),
                            selected = c("Female", "Male")
-      ),
+      )),
      
-      div(id = "radioShowAgeGroup", 
-          radioButtons("radioAgeGroup", "Age Group",
+        radioButtons("radioAgeGroup", "Age Group",
                        c("all" = "All",
-                         "select" = "Select"))
-      ), 
+                         "select" = "Select")),
+      
+      div(id = "showAgeGroup", 
       checkboxGroupInput("ageGroup", NA, 
                          choices = list("35-54" = "35", 
                                         "55-64" = "55", 
                                         "65-74" = "65",
                                         "75 and older" = "75"),
-                         selected = "65"
-      ),
+                         selected = "65")),
       
-      div(id = "radioShowProvinces", 
           radioButtons("radioProvinces", "Province",
                        c("all" = "All",
-                         "select" = "Select"))
-      ), 
+                         "select" = "Select")),
+                       
+      div(id = "showProvinces", 
       checkboxGroupInput("province", NA, 
                             choices = list("Alberta" = "AB", 
                                            "British Columbia" = "BC", 
@@ -71,7 +71,7 @@ ui <- fluidPage(
                                            "Quebec" = "QC", 
                                            "Saskatchewan" = "SK"),
                             selected = "BC")
-      ),
+      )),
 
       
       mainPanel(
@@ -116,13 +116,22 @@ server <- function(input, output, session) {
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
    
    observe({
-     if (input$selectedTab=="Cost") {
-       shinyjs::toggle (id = "radioCost")
-       shinyjs::toggle (id = "radioNumberOfCases")}
+     if (input$radioGender == "Select") {
+       shinyjs::show (id = "showGender", anim = TRUE)
+       }
+       else shinyjs::hide (id = "showGender", anim = TRUE)
      
-     else if (input$selectedTab=="Number of Cases") {
-       shinyjs::toggle (id = "radioCost")
-       shinyjs::toggle (id = "radioNumberOfCases")}
+     if (input$radioAgeGroup == "Select") {
+       shinyjs::show (id = "showAgeGroup", anim = TRUE)
+     }
+     else shinyjs::hide (id = "showAgeGroup", anim = TRUE)
+     
+     if (input$radioProvinces == "Select") {
+       shinyjs::show (id = "showProvinces", anim = TRUE)
+     }
+     else shinyjs::hide (id = "showProvinces", anim = TRUE)
+     
+ 
      })  
    
    output$download_plot_n = downloadHandler(
