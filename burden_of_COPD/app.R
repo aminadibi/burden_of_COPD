@@ -37,6 +37,7 @@ ui <- fluidPage(
                              "Don't Divide" = "dont"))
         ),
         
+      shinyjs::hidden(
       div(id = "radioNumberOfCases", 
       checkboxGroupInput("gender", label="Demographics",
                            choices = list(
@@ -66,7 +67,7 @@ ui <- fluidPage(
                                            "Saskatchewan" = "SK",
                                            "Canada - Overall" = "CA"),
                             selected = "BC")
-      )),
+      ))),
 
       
       mainPanel(
@@ -112,12 +113,12 @@ server <- function(input, output, session) {
    
    observe({
      if (input$selectedTab=="Cost") {
-       cat(input$selectedTab=="Cost")
-       shinyjs::toggle (id = "radioCost")}
-     else if (input$selectedTab=="Number of Cases") {
-       cat(input$selectedTab=="Cost")
        shinyjs::toggle (id = "radioCost")
-     }
+       shinyjs::toggle (id = "radioNumberOfCases")}
+     
+     else if (input$selectedTab=="Number of Cases") {
+       shinyjs::toggle (id = "radioCost")
+       shinyjs::toggle (id = "radioNumberOfCases")}
      })  
    
    output$download_plot_n = downloadHandler(
