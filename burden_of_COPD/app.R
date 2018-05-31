@@ -20,23 +20,32 @@ library(htmltools)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-   
+  shinyjs::useShinyjs(),
+  
    # Application title
    titlePanel("Burden of COPD"),
    
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
+
+        div(id = "radioCost",
+              radioButtons("divideBy", "Distribution type:",
+                           c("Gender" = "gender",
+                             "Age" = "age",
+                             "Province" = "provice",
+                             "Don't Divide" = "dont"))
+        ),
         
-        checkboxGroupInput("gender", 
-                           h4("Demographics"), 
+      div(id = "radioNumberOfCases", 
+      checkboxGroupInput("gender", label="Demographics",
                            choices = list(
                                           "female" = "Female", 
                                           "male" = "Male"),
                            selected = c("Female", "Male")
       ),
-      checkboxGroupInput("ageGroup", 
-                         h4("Age Group"), 
+     
+      checkboxGroupInput("ageGroup", "Age Group", 
                          choices = list("35-54" = "35", 
                                         "55-64" = "55", 
                                         "65-74" = "65",
@@ -44,8 +53,7 @@ ui <- fluidPage(
                          selected = "65"
       ),
       
-         checkboxGroupInput("province", 
-                            h4("Provinces"), 
+      checkboxGroupInput("province", "Provinces", 
                             choices = list("Alberta" = "AB", 
                                            "British Columbia" = "BC", 
                                            "Manitoba" = "MB",
@@ -58,12 +66,12 @@ ui <- fluidPage(
                                            "Saskatchewan" = "SK",
                                            "Canada - Overall" = "CA"),
                             selected = "BC")
-      ),
+      )),
 
       
       mainPanel(
         
-        tabsetPanel(type="tabs",
+        tabsetPanel(id="selectedTab", type="tabs",
                     tabPanel("Number of Cases",
                              plotlyOutput("plot_n_COPD"),
                              br(),
@@ -102,7 +110,16 @@ server <- function(input, output, session) {
    copdNumber <- read_rds("./copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
    
-  # wb <- loadWorkbook("./Burden_of_COPD_BC_ProvidenceAPR04.xlsx", create=F)
+   observe({
+     if (input$selectedTab=="Cost") {
+       cat(input$selectedTab=="Cost")
+       shinyjs::toggle (id = "radioCost")}
+     else if (input$selectedTab=="Number of Cases") {
+       cat(input$selectedTab=="Cost")
+       shinyjs::toggle (id = "radioCost")
+     }
+     })  
+   
    output$download_plot_n = downloadHandler(
      filename = function() {
        paste("COPD_Projected_Prevalence_", Sys.Date(), ".png", sep="")
