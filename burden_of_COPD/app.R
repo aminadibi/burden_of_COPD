@@ -29,24 +29,24 @@ ui <- fluidPage(
    sidebarLayout(
       sidebarPanel(
 
-        div(id = "radioCost",
-              radioButtons("divideBy", "Distribution type:",
-                           c("Gender" = "gender",
-                             "Age" = "age",
-                             "Province" = "provice",
-                             "Don't Divide" = "dont"))
-        ),
-        
-      shinyjs::hidden(
-      div(id = "radioNumberOfCases", 
-      checkboxGroupInput("gender", label="Demographics",
+          div(id = "radioShowGender", 
+          radioButtons("radioGender", "Gender",
+                           c("all" = "All",
+                             "select" = "Select"))
+          ),               
+      checkboxGroupInput("gender", label = NA,
                            choices = list(
                                           "female" = "Female", 
                                           "male" = "Male"),
                            selected = c("Female", "Male")
       ),
      
-      checkboxGroupInput("ageGroup", "Age Group", 
+      div(id = "radioShowAgeGroup", 
+          radioButtons("radioAgeGroup", "Age Group",
+                       c("all" = "All",
+                         "select" = "Select"))
+      ), 
+      checkboxGroupInput("ageGroup", NA, 
                          choices = list("35-54" = "35", 
                                         "55-64" = "55", 
                                         "65-74" = "65",
@@ -54,7 +54,12 @@ ui <- fluidPage(
                          selected = "65"
       ),
       
-      checkboxGroupInput("province", "Provinces", 
+      div(id = "radioShowProvinces", 
+          radioButtons("radioProvinces", "Province",
+                       c("all" = "All",
+                         "select" = "Select"))
+      ), 
+      checkboxGroupInput("province", NA, 
                             choices = list("Alberta" = "AB", 
                                            "British Columbia" = "BC", 
                                            "Manitoba" = "MB",
@@ -64,10 +69,9 @@ ui <- fluidPage(
                                            "Ontario" = "ON",
                                            "Prince Edward Island" = "PE",
                                            "Quebec" = "QC", 
-                                           "Saskatchewan" = "SK",
-                                           "Canada - Overall" = "CA"),
+                                           "Saskatchewan" = "SK"),
                             selected = "BC")
-      ))),
+      ),
 
       
       mainPanel(
@@ -103,8 +107,8 @@ ui <- fluidPage(
 
         )
      )
-  )
-)
+  
+))
 
 server <- function(input, output, session) {
    cost <- read_rds("./cost.rds")
@@ -148,7 +152,7 @@ server <- function(input, output, session) {
   cost_plot <- reactive ({ 
    cost$Legend <- interaction(cost$province, cost$gender, cost$age)
    p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type %in% input$costType))), aes(x = Year, y=value/1000000, fill = Legend)) + 
-        geom_bar(stat = "identity")  + labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw() 
+        geom_bar(stat = "identity", position = "dodge")  + labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw() 
       
    ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
