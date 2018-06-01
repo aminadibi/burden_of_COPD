@@ -57,7 +57,7 @@ ui <- fluidPage(
                          selected = "65")),
       
           radioButtons("radioProvinces", "Province",
-                       c("all" = "All",
+                       c("overall Canada" = "Canada",
                          "select" = "Select")),
                        
       div(id = "showProvinces", 
@@ -124,7 +124,8 @@ server <- function(input, output, session) {
      if (input$radioGender == "Select") {
        shinyjs::show (id = "showGender", anim = TRUE)
        }
-       else shinyjs::hide (id = "showGender", anim = TRUE)
+       else {shinyjs::hide (id = "showGender", anim = TRUE)
+       }
      
      if (input$radioAgeGroup == "Select") {
        shinyjs::show (id = "showAgeGroup", anim = TRUE)
@@ -162,10 +163,28 @@ server <- function(input, output, session) {
     print (cost_plot())
   })
   
+
   
   cost_plot <- reactive ({ 
+    if (input$radioGender == "All") {
+      genderCheck <- "all"
+    } else {
+      genderCheck <- input$gender
+    }
+    
+    if (input$radioAgeGroup == "All") {
+      ageGroupCheck <- "all"
+    } else {
+      ageGroupCheck <- input$ageGroup
+    }
+    
+    if (input$radioProvinces == "Canada") {
+      provinceCheck <- "Canada"
+    } else {
+      provinceCheck <- input$province
+    }
    cost$Legend <- interaction(cost$province, cost$gender, cost$age)
-   p <- ggplot(subset (cost, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province) & (type %in% input$costType))), aes(x = Year, y=value/1000000, fill = Legend)) + 
+   p <- ggplot(subset (cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck) & (type %in% input$costType))), aes(x = Year, y=value/1000000, fill = Legend)) + 
         geom_bar(stat = "identity", position = "dodge")  + labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw() 
       
    ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
@@ -177,8 +196,25 @@ server <- function(input, output, session) {
    })
   
   n_copd_plot <- reactive ({ 
+    if (input$radioGender == "All") {
+      genderCheck <- "all"
+    } else {
+      genderCheck <- input$gender
+    }
+    
+    if (input$radioAgeGroup == "All") {
+      ageGroupCheck <- "all"
+    } else {
+      ageGroupCheck <- input$ageGroup
+    }
+    
+    if (input$radioProvinces == "Canada") {
+      provinceCheck <- "Canada"
+    } else {
+      provinceCheck <- input$province
+    }
     copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age)
-    p <- ggplot(subset (copdNumber, ((gender %in% input$gender) & (age %in% input$ageGroup) & (province %in% input$province))), aes(x = Year, y=value, color = Legend)) + 
+    p <- ggplot(subset (copdNumber, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck))), aes(x = Year, y=value, color = Legend)) + 
          geom_point() + geom_line() + theme_bw() + labs(x="Year", y="")
 
 
