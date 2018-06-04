@@ -11,7 +11,7 @@ library(shiny)
 library(shinythemes)
 library(ggplot2)
 library(plotly)
-#library(XLConnect)
+library(scales)
 library(readr)
 library(rmarkdown) #for markdown file
 library(knitr) #for markdown file
@@ -215,7 +215,8 @@ server <- function(input, output, session) {
     }
     copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age)
     p <- ggplot(subset (copdNumber, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck))), aes(x = Year, y=value, color = Legend)) + 
-         geom_point() + geom_line() + theme_bw() + labs(x="Year", y="")
+         geom_point() + geom_line() + theme_bw() + labs(x="Year", y="") +  scale_y_continuous(labels = comma)
+
 
 
     ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
