@@ -39,12 +39,12 @@ ui <- fluidPage(
                            choices = list(
                                           "female" = "Female", 
                                           "male" = "Male",
-                                          "all" = "all"),
-                           selected = c("Female", "Male")
+                                          "all" = "all genders"),
+                           selected = c("all genders")
       )),
      
         radioButtons("radioAgeGroup", "Age Group",
-                       c("all" = "All",
+                       c("all" = "all ages",
                          "select" = "Select")),
       
       div(id = "showAgeGroup", 
@@ -53,8 +53,8 @@ ui <- fluidPage(
                                         "55-64" = "55", 
                                         "65-74" = "65",
                                         "75 and older" = "75",
-                                        "all" = "all"),
-                         selected = "65")),
+                                        "all" = "all ages"),
+                         selected = "all ages")),
       
           radioButtons("radioProvinces", "Province",
                        c("overall Canada" = "Canada",
@@ -75,7 +75,7 @@ ui <- fluidPage(
                                            "Canada" = "Canada"
                                            
                                            ),
-                            selected = "BC")
+                            selected = "Canada")
       )),
 
       
@@ -85,7 +85,7 @@ ui <- fluidPage(
                     tabPanel("Number of Cases",
                              plotlyOutput("plot_n_COPD"),
                              br(),
-                             tableOutput("table_n_COPD"), 
+                             #tableOutput("table_n_COPD"), 
                              br(), br(),
                              div(id = "SaveLoad",
                                  downloadButton("download_plot_n", "Download Plot")   
@@ -100,7 +100,7 @@ ui <- fluidPage(
                                                         "Pharma" = "pharm"), selected = "sum"),
                              plotlyOutput("plot_cost"),
                              br(),
-                             tableOutput("table_cost"), 
+                             #tableOutput("table_cost"), 
                              br(), br(),
                              div(id = "SaveLoad",
                                  downloadButton("download_plot_cost", "Download Plot")
@@ -166,14 +166,14 @@ server <- function(input, output, session) {
 
   
   cost_plot <- reactive ({ 
-    if (input$radioGender == "All") {
-      genderCheck <- "all"
+    if (input$radioGender == "all genders") {
+      genderCheck <- "all genders"
     } else {
       genderCheck <- input$gender
     }
-    
-    if (input$radioAgeGroup == "All") {
-      ageGroupCheck <- "all"
+
+    if (input$radioAgeGroup == "all ages") {
+      ageGroupCheck <- "all ages"
     } else {
       ageGroupCheck <- input$ageGroup
     }
@@ -196,14 +196,14 @@ server <- function(input, output, session) {
    })
   
   n_copd_plot <- reactive ({ 
-    if (input$radioGender == "All") {
-      genderCheck <- "all"
+    if (input$radioGender == "all genders") {
+      genderCheck <- "all genders"
     } else {
       genderCheck <- input$gender
     }
     
-    if (input$radioAgeGroup == "All") {
-      ageGroupCheck <- "all"
+    if (input$radioAgeGroup == "all ages") {
+      ageGroupCheck <- "all ages"
     } else {
       ageGroupCheck <- input$ageGroup
     }

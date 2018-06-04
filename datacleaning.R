@@ -75,12 +75,12 @@ cost <- rbind(cost, as.data.frame(all_province))
 
 #adding "all" row for gender
 all_gender <- cost %>% group_by(Year, age, province, type) %>% summarize(value = sum(value))
-all_gender$gender <- "all"
+all_gender$gender <- "all genders"
 cost <- rbind(cost, as.data.frame(all_gender))
 
 #adding "all" row for age group
 all_age <- cost %>% group_by(Year, gender, province, type) %>% summarize(value = sum(value))
-all_age$age <- "all"
+all_age$age <- "all ages"
 cost <- rbind(cost, as.data.frame(all_age))
 
 
@@ -104,12 +104,12 @@ copdNumber <- rbind(copdNumber, as.data.frame(all_province))
 
 #adding "all" row for gender
 all_gender <- copdNumber %>% group_by(Year, age, province) %>% summarize(value = sum(value))
-all_gender$gender <- "all"
+all_gender$gender <- "all genders"
 copdNumber <- rbind(copdNumber, as.data.frame(all_gender))
 
 #adding "all" row for age group
 all_age <- copdNumber %>% group_by(Year, gender, province) %>% summarize(value = sum(value))
-all_age$age <- "all"
+all_age$age <- "all ages"
 copdNumber <- rbind(copdNumber, as.data.frame(all_age))
 
 #save
