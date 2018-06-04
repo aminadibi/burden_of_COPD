@@ -11,7 +11,7 @@ library(shiny)
 library(shinythemes)
 library(ggplot2)
 library(plotly)
-library(XLConnect)
+#library(XLConnect)
 library(readr)
 library(rmarkdown) #for markdown file
 library(knitr) #for markdown file
