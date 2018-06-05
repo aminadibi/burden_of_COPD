@@ -160,7 +160,7 @@ server <- function(input, output, session) {
 
    
   output$plot_cost <- renderPlotly({
-    print (cost_plot())
+    cost_plot()
   })
   
 
@@ -192,7 +192,7 @@ server <- function(input, output, session) {
   })
     
    output$plot_n_COPD <- renderPlotly({
-     print (n_copd_plot())
+     n_copd_plot()
    })
   
   n_copd_plot <- reactive ({ 
