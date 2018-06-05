@@ -19,7 +19,7 @@ library(htmltools)
 
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(
+ui <- fluidPage(theme = shinytheme("simplex"),
   shinyjs::useShinyjs(),
   
    # Application title
