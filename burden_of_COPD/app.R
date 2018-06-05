@@ -23,7 +23,7 @@ ui <- fluidPage(
   shinyjs::useShinyjs(),
   
    # Application title
-   titlePanel("Burden of COPD"),
+   titlePanel("Burden of COPD in Canada"),
    
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
