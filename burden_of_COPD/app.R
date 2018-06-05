@@ -34,33 +34,33 @@ ui <- fluidPage(
                            c("all" = "All",
                              "select" = "Select")),
       
-      div(id = "showGender",                 
+      shinyjs::hidden(div(id = "showGender",                 
       checkboxGroupInput("gender", label = NA,
                            choices = list(
                                           "female" = "Female", 
                                           "male" = "Male",
                                           "all" = "all genders"),
                            selected = c("all genders")
-      )),
+      ))),
      
         radioButtons("radioAgeGroup", "Age Group",
                        c("all" = "all ages",
                          "select" = "Select")),
       
-      div(id = "showAgeGroup", 
+      shinyjs::hidden(div(id = "showAgeGroup", 
       checkboxGroupInput("ageGroup", NA, 
                          choices = list("35-54" = "35", 
                                         "55-64" = "55", 
                                         "65-74" = "65",
                                         "75 and older" = "75",
                                         "all" = "all ages"),
-                         selected = "all ages")),
+                         selected = "all ages"))),
       
           radioButtons("radioProvinces", "Province",
                        c("overall Canada" = "Canada",
                          "select" = "Select")),
                        
-      div(id = "showProvinces", 
+      shinyjs::hidden(div(id = "showProvinces", 
       checkboxGroupInput("province", NA, 
                             choices = list("Alberta" = "AB", 
                                            "British Columbia" = "BC", 
@@ -76,7 +76,7 @@ ui <- fluidPage(
                                            
                                            ),
                             selected = "Canada")
-      )),
+      ))),
 
       
       mainPanel(
