@@ -166,7 +166,7 @@ server <- function(input, output, session) {
 
   
   cost_plot <- reactive ({ 
-    if (input$radioGender == "all genders") {
+    if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
       genderCheck <- input$gender
@@ -196,7 +196,7 @@ server <- function(input, output, session) {
    })
   
   n_copd_plot <- reactive ({ 
-    if (input$radioGender == "all genders") {
+    if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
       genderCheck <- input$gender
