@@ -16,6 +16,9 @@ library(readr)
 library(rmarkdown) #for markdown file
 library(knitr) #for markdown file
 library(htmltools)
+library(maps) # interactive map
+library(mapproj)
+source("map_plots.R")
 
 
 # Define UI for application that draws a histogram
@@ -27,41 +30,31 @@ ui <- fluidPage(theme = shinytheme("simplex"),
    
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
+      # SideBar
       sidebarPanel(
-
-         
-      radioButtons("radioGender", "Gender",
-                           c("all" = "All",
-                             "select" = "Select")),
+        # Gender
+        radioButtons("radioGender", "Gender", c("all" = "All","select" = "Select")),
       
-      shinyjs::hidden(div(id = "showGender",                 
-      checkboxGroupInput("gender", label = NA,
-                           choices = list(
-                                          "female" = "Female", 
-                                          "male" = "Male",
-                                          "all" = "all genders"),
-                           selected = c("all genders")
-      ))),
-     
-        radioButtons("radioAgeGroup", "Age Group",
-                       c("all" = "all ages",
-                         "select" = "Select")),
+        shinyjs::hidden(div(id = "showGender",                 
+          checkboxGroupInput("gender", label = NA,choices = list("female" = "Female", 
+            "male" = "Male","all" = "all genders"),selected = c("all genders")))),
+        
+        # Age Group
+        radioButtons("radioAgeGroup", "Age Group", c("all" = "all ages","select" = "Select")),
       
-      shinyjs::hidden(div(id = "showAgeGroup", 
-      checkboxGroupInput("ageGroup", NA, 
-                         choices = list("35-54" = "35", 
-                                        "55-64" = "55", 
-                                        "65-74" = "65",
-                                        "75 and older" = "75",
-                                        "all" = "all ages"),
-                         selected = "all ages"))),
-      
-          radioButtons("radioProvinces", "Province",
-                       c("overall Canada" = "Canada",
-                         "select" = "Select")),
+        shinyjs::hidden(div(id = "showAgeGroup", 
+          checkboxGroupInput("ageGroup", NA, choices = list("35-54" = "35", 
+                                                            "55-64" = "55", 
+                                                            "65-74" = "65",
+                                                            "75 and older" = "75",
+                                                            "all" = "all ages"),
+            selected = "all ages"))),
+        
+        # Provinces
+        radioButtons("radioProvinces", "Province",c("overall Canada" = "Canada", "select" = "Select")),
                        
-      shinyjs::hidden(div(id = "showProvinces", 
-      checkboxGroupInput("province", NA, 
+        shinyjs::hidden(div(id = "showProvinces", 
+          checkboxGroupInput("province", NA, 
                             choices = list("Alberta" = "AB", 
                                            "British Columbia" = "BC", 
                                            "Manitoba" = "MB",
@@ -72,43 +65,53 @@ ui <- fluidPage(theme = shinytheme("simplex"),
                                            "Prince Edward Island" = "PE",
                                            "Quebec" = "QC", 
                                            "Saskatchewan" = "SK",
-                                           "Canada" = "Canada"
-                                           
-                                           ),
-                            selected = "Canada")
-      ))),
+                                           "Canada" = "Canada"),
+                            selected = "Canada"))),
+        # Year
+        radioButtons("radioYear", "Year",c("all" = "all years","select" = "Select")),
 
-      
+        shinyjs::hidden(div(id = "showYear",
+          checkboxGroupInput("year", label = NA, choices = list("2020" = "2020",
+                                                                "2025" = "2025",
+                                                                "2030" = "2030",
+                                                                "all" = "all years"),
+            selected = "all years")))),
+      # Center 
       mainPanel(
         
-        tabsetPanel(id="selectedTab", type="tabs",
-                    tabPanel("Number of Cases",
-                             plotlyOutput("plot_n_COPD"),
-                             br(),
-                             #tableOutput("table_n_COPD"), 
-                             br(), br(),
-                             div(id = "SaveLoad",
-                                 downloadButton("download_plot_n", "Download Plot")   
-                             
-                    )),
+        tabsetPanel(
+          id="selectedTab", 
+          type="tabs", 
+          tabPanel("Number of Cases",plotlyOutput("plot_n_COPD"),br(),#tableOutput("table_n_COPD"), 
+                    br(), br(),div(id = "SaveLoad",downloadButton("download_plot_n", "Download Plot"))),
                     
-                    tabPanel("Cost",
-                             selectInput("costType", h5("Cost Type"), 
-                                         choices = list("Total" = "sum",
+          tabPanel("Cost", selectInput("costType", 
+                                        h5("Cost Type"), 
+                                        choices = list("Total" = "sum",
                                                         "Inpatient" = "hosp", 
                                                         "Outpatient" = "MSP",
-                                                        "Pharma" = "pharm"), selected = "sum"),
-                             plotlyOutput("plot_cost"),
-                             br(),
-                             #tableOutput("table_cost"), 
-                             br(), br(),
-                             div(id = "SaveLoad",
-                                 downloadButton("download_plot_cost", "Download Plot")
-                             
-                            )),
-                    tabPanel("Terms",  includeMarkdown("./disclaimer.rmd")),
-                    tabPanel("About",  includeMarkdown("./about.rmd"), 
-                             imageOutput("logos"))
+                                                        "Pharma" = "pharm"), 
+                                        selected = "sum"),
+                                        plotlyOutput("plot_cost"),
+                                        br(),
+                                        #tableOutput("table_cost"), 
+                                        br(), br(),
+                                        div(id = "SaveLoad",
+                                            downloadButton("download_plot_cost", "Download Plot"))),
+          tabPanel("Terms",  includeMarkdown("./disclaimer.rmd")),
+          tabPanel("About",  includeMarkdown("./about.Rmd"), imageOutput("logos")),
+          tabPanel("Map", 
+                   selectInput("costTypeMap", 
+                                h5("Cost Type"), 
+                                choices = list("Total" = "sum",
+                                                "Inpatient" = "hosp", 
+                                                "Outpatient" = "MSP",
+                                                "Pharma" = "pharm"), 
+                                selected = "sum"),
+                   plotOutput("map"),
+                   sliderInput(inputId="sliderYear", label="Year", 
+                               min=2015, max=2030, value=2015, step = NULL, round = FALSE, 
+                               ticks = TRUE, animate = FALSE, sep=""))
 
         )
      )
@@ -137,6 +140,11 @@ server <- function(input, output, session) {
      }
      else shinyjs::hide (id = "showProvinces", anim = TRUE)
      
+     if (input$radioYear == "Select") {
+       shinyjs::show (id = "showYear", anim = TRUE)
+     }
+     else shinyjs::hide (id = "showYear", anim = TRUE)
+     
  
      })  
    
@@ -158,12 +166,9 @@ server <- function(input, output, session) {
      }
    )
 
-   
   output$plot_cost <- renderPlotly({
     cost_plot()
   })
-  
-
   
   cost_plot <- reactive ({ 
     if (input$radioGender == "All") {
@@ -183,7 +188,7 @@ server <- function(input, output, session) {
     } else {
       provinceCheck <- input$province
     }
-   cost$Legend <- interaction(cost$province, cost$gender, cost$age)
+   cost$Legend <- interaction(cost$province, cost$gender, cost$age, sep=" ")
    p <- ggplot(subset (cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck) & (type %in% input$costType))), aes(x = Year, y=value/1000000, fill = Legend)) + 
         geom_bar(stat = "identity", position = "dodge")  + labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw() 
       
@@ -213,7 +218,7 @@ server <- function(input, output, session) {
     } else {
       provinceCheck <- input$province
     }
-    copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age)
+    copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age, sep=" ")
     p <- ggplot(subset (copdNumber, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck))), aes(x = Year, y=value, color = Legend)) + 
          geom_point() + geom_line() + theme_bw() + labs(x="Year", y="") +  scale_y_continuous("\n", labels = comma)
 
@@ -232,6 +237,50 @@ server <- function(input, output, session) {
          width = width,
          alt = "This is alternate text")
   }, deleteFile = FALSE)
+  
+
+  map_plot <- reactive({
+    if (input$radioGender == "All") {
+      genderCheck <- "all genders"
+    } else {
+      genderCheck <- input$gender
+    }
+    
+    if (input$radioAgeGroup == "all ages") {
+      ageGroupCheck <- "all ages"
+    } else {
+      ageGroupCheck <- input$ageGroup
+    }
+    if (input$radioYear == "all years") {
+      yearCheck <- seq(from=min(cost$Year), to=max(cost$Year), by=1)
+    } else {
+      yearCheck <- as.numeric(input$year)
+    }
+    yearCheck <- input$sliderYear
+    
+    dollar  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) 
+                           &(type %in% input$costTypeMap) &(province!="Canada")))
+    dollarRange <- c(min(dollar$value), max(dollar$value))
+    data  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (Year %in% yearCheck)
+                           &(type %in% input$costTypeMap)))
+    print(cost$Year)
+    print(dollar$value)
+    print(dollar[168,])
+    print(genderCheck)
+    print(ageGroupCheck)
+    print(input$radioYear)
+    print(yearCheck)
+    print(max(cost$Year))
+    print(min(cost$Year))
+    print(data$Year)
+    print(input$costTypeMap)
+    print(dollarRange)
+    drawMap(data, dollarRange)
+    })
+  
+  output$map <- renderPlot({
+    map_plot()
+  })
   
 }
 
