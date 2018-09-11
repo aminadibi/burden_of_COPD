@@ -122,6 +122,7 @@ server <- function(input, output, session) {
    cost <- read_rds("./cost.rds")
    copdNumber <- read_rds("./copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
+   mapFrame <- getMap()
    
    observe({
      if (input$radioGender == "Select") {
@@ -275,7 +276,7 @@ server <- function(input, output, session) {
     print(data$Year)
     print(input$costTypeMap)
     print(dollarRange)
-    drawMap(data, dollarRange)
+    drawMap(data, dollarRange, mapFrame[[1]], mapFrame[[2]])
     })
   
   output$map <- renderPlot({

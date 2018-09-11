@@ -9,6 +9,7 @@ library(rgdal)
 library(ggplot2)
 library(ggthemes)
 library(viridis)
+can1 <- 
 
 provinceConvert <- function(provinces, to){
   short <- c("AB", "BC", "SK", "MB", "ON", "QC", "NF", "NT", "NU", "PE", "YT", "NS", "NB")
@@ -46,8 +47,7 @@ getCost <- function(data, provinces){
   return(pop)
 }
 
-
-drawMap <- function(data, dollarRange){
+getMap <- function(){
   can1<-getData('GADM', country="CAN", level=1) 
   provinces <- unique(can1$NAME_1)
   prov_red <- can1$NAME_1
@@ -58,8 +58,16 @@ drawMap <- function(data, dollarRange){
                                            proj4string=CRS("+proj=longlat")),
                              newProj)
   can1Pr <- spTransform(can1, newProj)
-  #can1Pr <- can1
   prov_red <- provinceConvert(prov_red, "toShort")
+  can2 <- can1Pr[can1Pr$NAME_1 %in% provinces,]
+  
+  can_simp <- gSimplify(can2, tol=10000)
+  mapFrame <- list(prov_red, can_simp)
+  return(mapFrame)
+}
+
+drawMap <- function(data, dollarRange, prov_red, can_simp){
+  
   pop_data <- getCost(data, prov_red)
   pop <- pop_data$pop
   col_range <- 50
@@ -91,9 +99,6 @@ drawMap <- function(data, dollarRange){
                 labels=labels,
                 col=(col_scale))
 
-  can2 <- can1Pr[can1Pr$NAME_1 %in% provinces,]
-  
-  can_simp <- gSimplify(can2, tol=10000)
   can_simp@plotOrder <- seq(1, length(prov_red))
   can_simp$ID <- seq(1, length(prov_red))
   cuts = length(provinces)-1
@@ -101,4 +106,7 @@ drawMap <- function(data, dollarRange){
          col="white")
 
 }
+
+
+
 
