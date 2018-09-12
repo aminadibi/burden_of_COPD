@@ -9,10 +9,9 @@ library(rgdal)
 library(ggplot2)
 library(ggthemes)
 library(viridis)
-can1 <- 
 
 provinceConvert <- function(provinces, to){
-  short <- c("AB", "BC", "SK", "MB", "ON", "QC", "NF", "NT", "NU", "PE", "YT", "NS", "NB")
+  short <- c("AB", "BC", "SK", "MB", "ON", "QC", "NL", "NT", "NU", "PE", "YT", "NS", "NB")
   long <- c("Alberta", "British Columbia", "Saskatchewan", "Manitoba",
             "Ontario", "Québec", "Newfoundland and Labrador", "Northwest Territories",
             "Nunavut", "Prince Edward Island", "Yukon", "Nova Scotia", 
@@ -102,8 +101,22 @@ drawMap <- function(data, dollarRange, prov_red, can_simp){
   can_simp@plotOrder <- seq(1, length(prov_red))
   can_simp$ID <- seq(1, length(prov_red))
   cuts = length(provinces)-1
-  spplot(can_simp, col.regions=colors, zcol="ID",cuts=cuts,usePolypath=FALSE, colorkey=colorkey,
-         col="white")
+  # spplot(can_simp, col.regions=colors, zcol="ID",cuts=cuts,usePolypath=FALSE, colorkey=colorkey,
+  #        col="white")
+  
+  can_simp.points = fortify(can_simp, region="ID")
+  a=unique(can_simp.points$id)
+  a=sort(a)
+  a=as.numeric(a)
+  colors <- colors[a]
+  #can_simp.df = join(utah.points, utah@data, by="ID")
+  gg <- ggplot(can_simp.points, aes(x=long, y=lat, group=group))+
+    geom_polygon(aes(fill=id)) +
+    geom_path(color="white") +
+    coord_equal() +
+    labs(x="", y="")+
+    scale_fill_manual(values=colors, labels=prov_red[a], name="Provinces")
+  gg
 
 }
 
