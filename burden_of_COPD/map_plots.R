@@ -9,6 +9,8 @@ library(rgdal)
 library(ggplot2)
 library(ggthemes)
 library(viridis)
+library(plotly)
+source(helper_functions.R)
 
 provinceConvert <- function(provinces, to){
   short <- c("AB", "BC", "SK", "MB", "ON", "QC", "NL", "NT", "NU", "PE", "YT", "NS", "NB")
@@ -70,7 +72,7 @@ drawMap <- function(data, dollarRange, prov_red, can_simp){
   pop_data <- getCost(data, prov_red)
   pop <- pop_data$pop
   col_range <- 50
-  colfunc<-colorRampPalette(c("red","yellow","springgreen","royalblue"))
+  scale_size <- 10
   colfunc <- viridis
   col_scale <- colfunc(col_range+1)
   min_pop <- dollarRange[1]
@@ -90,35 +92,36 @@ drawMap <- function(data, dollarRange, prov_red, can_simp){
   colors[nodata] <- "grey"
   labels <- c()
   for(i in 0:10){
-    lab <- round(min_pop + i*scale*col_range/10)
-    lab <- paste0("$", as.character(lab))
+    lab <- round(min_pop + i*scale*col_range/scale_size)
     labels <- c(labels, lab)
   }
-  colorkey <- list(at=as.numeric(factor(c(seq(from=0, to=1, by=.10)))),
-                labels=labels,
-                col=(col_scale))
-
-  can_simp@plotOrder <- seq(1, length(prov_red))
-  can_simp$ID <- seq(1, length(prov_red))
-  cuts = length(provinces)-1
-  # spplot(can_simp, col.regions=colors, zcol="ID",cuts=cuts,usePolypath=FALSE, colorkey=colorkey,
-  #        col="white")
   
   can_simp.points = fortify(can_simp, region="ID")
   a=unique(can_simp.points$id)
   a=sort(a)
   a=as.numeric(a)
   colors <- colors[a]
-  #can_simp.df = join(utah.points, utah@data, by="ID")
+  figures <- costToMill(pop)
+  legend_labels <- c(" No Data", costToMill(labels))
+  scale_data = data.frame(x1=rep(can_simp@bbox[1,1],scale_size+2), y1=rep(can_simp@bbox[2,1],scale_size+2), 
+                          labels=legend_labels)
+  
+  col_scale2 <- c("grey",colfunc(scale_size+1))
   gg <- ggplot(can_simp.points, aes(x=long, y=lat, group=group))+
     geom_polygon(aes(fill=id)) +
     geom_path(color="white") +
+    geom_point(data=scale_data, aes(x1, y1, colour=labels), inherit.aes=FALSE) +
     coord_equal() +
-    labs(x="", y="")+
-    scale_fill_manual(values=colors, labels=prov_red[a], name="Provinces")
+    labs(x="", y="") +
+    guides(color=guide_legend(reverse=TRUE), fill=FALSE)+
+    scale_fill_manual(values=colors, labels=figures[a], name="Provinces")+
+    scale_colour_manual(values=col_scale2, name="Annual Cost")
   gg
+  
+
 
 }
+
 
 
 
