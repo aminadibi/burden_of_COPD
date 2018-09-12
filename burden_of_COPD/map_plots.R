@@ -10,7 +10,7 @@ library(ggplot2)
 library(ggthemes)
 library(viridis)
 library(plotly)
-source(helper_functions.R)
+source("helper_functions.R")
 
 provinceConvert <- function(provinces, to){
   short <- c("AB", "BC", "SK", "MB", "ON", "QC", "NL", "NT", "NU", "PE", "YT", "NS", "NB")
@@ -117,8 +117,6 @@ drawMap <- function(data, dollarRange, prov_red, can_simp){
     scale_fill_manual(values=colors, labels=figures[a], name="Provinces")+
     scale_colour_manual(values=col_scale2, name="Annual Cost")
   gg
-  
-
 
 }
 
