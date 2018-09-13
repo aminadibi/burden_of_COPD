@@ -18,7 +18,38 @@ library(knitr) #for markdown file
 library(htmltools)
 library(maps) # interactive map
 library(mapproj)
+library(leaflet)
 source("map_plots.R")
+
+# Left Sidebar
+
+choices_gender <- list("female" = "Female", 
+                       "male" = "Male",
+                       "all" = "all genders")
+choices_age <- list("35-54" = "35", 
+                    "55-64" = "55", 
+                    "65-74" = "65",
+                    "75 and older" = "75",
+                    "all" = "all ages")
+choices_prov <- list(
+     "Alberta" = "AB", 
+     "British Columbia" = "BC", 
+     "Manitoba" = "MB",
+     "New Brunswick" = "NB",
+     "Newfoundland and Labrador" = "NL",
+     "Nova Scotia" = "NS",
+     "Ontario" = "ON",
+     "Prince Edward Island" = "PE",
+     "Quebec" = "QC", 
+     "Saskatchewan" = "SK",
+     "Canada" = "Canada")
+choices_year <- list(
+     "2020" = "2020",
+     "2025" = "2025",
+     "2030" = "2030",
+     "all" = "all years")
+ids <- c("showGender", "showAgeGroup", "showProvinces", "showYear")
+
 
 
 # Define UI for application that draws a histogram
@@ -35,47 +66,27 @@ ui <- fluidPage(theme = shinytheme("simplex"),
         # Gender
         radioButtons("radioGender", "Gender", c("all" = "All","select" = "Select")),
       
-        shinyjs::hidden(div(id = "showGender",                 
-          checkboxGroupInput("gender", label = NA,choices = list("female" = "Female", 
-            "male" = "Male","all" = "all genders"),selected = c("all genders")))),
+        shinyjs::hidden(div(id = ids[1],                 
+          checkboxGroupInput("gender", label = NA,choices = choices_gender,selected = choices_gender$all))),
         
         # Age Group
         radioButtons("radioAgeGroup", "Age Group", c("all" = "all ages","select" = "Select")),
       
-        shinyjs::hidden(div(id = "showAgeGroup", 
-          checkboxGroupInput("ageGroup", NA, choices = list("35-54" = "35", 
-                                                            "55-64" = "55", 
-                                                            "65-74" = "65",
-                                                            "75 and older" = "75",
-                                                            "all" = "all ages"),
-            selected = "all ages"))),
+        shinyjs::hidden(div(id = ids[2], 
+          checkboxGroupInput("ageGroup", NA, choices = choices_age, selected = choices_age$all))),
         
         # Provinces
         radioButtons("radioProvinces", "Province",c("overall Canada" = "Canada", "select" = "Select")),
                        
-        shinyjs::hidden(div(id = "showProvinces", 
+        shinyjs::hidden(div(id = ids[3], 
           checkboxGroupInput("province", NA, 
-                            choices = list("Alberta" = "AB", 
-                                           "British Columbia" = "BC", 
-                                           "Manitoba" = "MB",
-                                           "New Brunswick" = "NB",
-                                           "Newfoundland and Labrador" = "NL",
-                                           "Nova Scotia" = "NS",
-                                           "Ontario" = "ON",
-                                           "Prince Edward Island" = "PE",
-                                           "Quebec" = "QC", 
-                                           "Saskatchewan" = "SK",
-                                           "Canada" = "Canada"),
-                            selected = "Canada"))),
+                            choices = choices_prov,
+                            selected = choices_prov$Canada))),
         # Year
         radioButtons("radioYear", "Year",c("all" = "all years","select" = "Select")),
 
-        shinyjs::hidden(div(id = "showYear",
-          checkboxGroupInput("year", label = NA, choices = list("2020" = "2020",
-                                                                "2025" = "2025",
-                                                                "2030" = "2030",
-                                                                "all" = "all years"),
-            selected = "all years")))),
+        shinyjs::hidden(div(id = ids[4],
+          checkboxGroupInput("year", label = NA, choices = choices_year, selected = choices_year$all)))),
       # Center 
       mainPanel(
         
@@ -98,20 +109,21 @@ ui <- fluidPage(theme = shinytheme("simplex"),
                                         br(), br(),
                                         div(id = "SaveLoad",
                                             downloadButton("download_plot_cost", "Download Plot"))),
-          tabPanel("Terms",  includeMarkdown("./disclaimer.rmd")),
-          tabPanel("About",  includeMarkdown("./about.Rmd"), imageOutput("logos")),
           tabPanel("Map", 
                    selectInput("costTypeMap", 
-                                h5("Cost Type"), 
-                                choices = list("Total" = "sum",
-                                                "Inpatient" = "hosp", 
-                                                "Outpatient" = "MSP",
-                                                "Pharma" = "pharm"), 
-                                selected = "sum"),
-                   plotOutput("map"),
+                               h5("Cost Type"), 
+                               choices = list("Total" = "sum",
+                                              "Inpatient" = "hosp", 
+                                              "Outpatient" = "MSP",
+                                              "Pharma" = "pharm"), 
+                               selected = "sum"),
+                   leafletOutput("map"),
                    sliderInput(inputId="sliderYear", label="Year", 
                                min=2015, max=2030, value=2015, step = NULL, round = FALSE, 
-                               ticks = TRUE, animate = FALSE, sep=""))
+                               ticks = TRUE, animate = FALSE, sep="")),
+          tabPanel("Terms",  includeMarkdown("./disclaimer.rmd")),
+          tabPanel("About",  includeMarkdown("./about.Rmd"), imageOutput("logos"))
+
 
         )
      )
@@ -126,25 +138,25 @@ server <- function(input, output, session) {
    
    observe({
      if (input$radioGender == "Select") {
-       shinyjs::show (id = "showGender", anim = TRUE)
+       shinyjs::show (id = ids[1], anim = TRUE)
        }
-       else {shinyjs::hide (id = "showGender", anim = TRUE)
+       else {shinyjs::hide (id = ids[1], anim = TRUE)
        }
      
      if (input$radioAgeGroup == "Select") {
-       shinyjs::show (id = "showAgeGroup", anim = TRUE)
+       shinyjs::show (id = ids[2], anim = TRUE)
      }
-     else shinyjs::hide (id = "showAgeGroup", anim = TRUE)
+     else shinyjs::hide (id = ids[2], anim = TRUE)
      
      if (input$radioProvinces == "Select") {
-       shinyjs::show (id = "showProvinces", anim = TRUE)
+       shinyjs::show (id = ids[3], anim = TRUE)
      }
-     else shinyjs::hide (id = "showProvinces", anim = TRUE)
+     else shinyjs::hide (id = ids[3], anim = TRUE)
      
      if (input$radioYear == "Select") {
-       shinyjs::show (id = "showYear", anim = TRUE)
+       shinyjs::show (id = ids[4], anim = TRUE)
      }
-     else shinyjs::hide (id = "showYear", anim = TRUE)
+     else shinyjs::hide (id = ids[4], anim = TRUE)
      
  
      })  
@@ -276,11 +288,17 @@ server <- function(input, output, session) {
     print(data$Year)
     print(input$costTypeMap)
     print(dollarRange)
-    drawMap(data, dollarRange, mapFrame[[1]], mapFrame[[2]])
+    map_data <- list("data"=data, "dollarRange"=dollarRange, "mapFrame"=mapFrame)
+    return(map_data)
     })
   
-  output$map <- renderPlot({
-    map_plot()
+  output$map <- renderLeaflet({
+    map_data <- map_plot()
+    data <- map_data$data
+    dollarRange <- map_data$dollarRange
+    mapFrame <- map_data$mapFrame
+    map <- drawMap2(data, dollarRange, mapFrame[[1]], mapFrame[[2]])
+    map
   })
   
 }
