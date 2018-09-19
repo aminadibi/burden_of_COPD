@@ -1,6 +1,7 @@
-censusData <- setClass(
+library(readr)
+costData <- setClass(
   # Set the name for the class
-  "censusData",
+  "costData",
   
   # Define the slots
   slots = c(
@@ -8,7 +9,6 @@ censusData <- setClass(
     provinces = "character",
     provinceOrder = "numeric",
     population = "numeric",
-    provinceKeys = "numeric",
     year = "numeric",
     data = "data.frame"
   ),
@@ -32,17 +32,16 @@ censusData <- setClass(
 )
 
 
-setGeneric(name="readFile",
+setGeneric(name="readRDS",
            def=function(object, filename)
            {
-             standardGeneric("readFile")
+             standardGeneric("readRDS")
            }
 )
-setMethod(f="readFile",signature="censusData",
+setMethod(f="readRDS",signature="costData",
           definition=function(object, filename){
-            data <- read.csv(filename, sep=",", header=T)
+            data <- read_rds(filename)
             object@data <- data
-            object@filename <- filename
             return(object)
           }
 )
@@ -52,7 +51,7 @@ setGeneric(name="setProvinces",
              standardGeneric("setProvinces")
            }
 )
-setMethod(f="setProvinces",signature="censusData",
+setMethod(f="setProvinces",signature="costData",
           definition=function(object){
             if(length(object@data)==0){
               print("No data found. Please call readFile first.")
@@ -62,13 +61,9 @@ setMethod(f="setProvinces",signature="censusData",
             provinceOrder = seq(1,length(provinces),1)
             c = which(provinces=="Canada")
             d = which(provinceOrder==c)
-            p = as.character(provinces[-c])
-            po = provinceOrder[-d]
-            names(po) = p
-            object@provinces = p
-            object@provinceOrder = po
-            
-          return(object)
+            object@provinces = as.character(provinces[-c])
+            object@provinceOrder = provinceOrder[-d]
+            return(object)
           }
 )
 setGeneric(name="getPopulation",
@@ -77,17 +72,16 @@ setGeneric(name="getPopulation",
              standardGeneric("getPopulation")
            }
 )
-setMethod(f="getPopulation",signature="censusData",
+setMethod(f="getPopulation",signature="costData",
           definition=function(object){
             if(object@provinces[1]=="0"){
               print("No provinces found. Please call setProvinces first.")
             } else{
-            pop = object@data$Population..2016[object@provinceOrder]
-            names(pop) = object@provinces
-            object@population = pop
+              pop = object@data$Population..2016[object@provinceOrder]
+              object@population = pop
             }
             return(object)
-            }
+          }
 )
 
 

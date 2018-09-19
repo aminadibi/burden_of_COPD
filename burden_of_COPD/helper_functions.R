@@ -15,3 +15,25 @@ costToMill <- function(cost_vector){
   }
   return(figures)
 }
+
+provinceConvert <- function(provinces, to, quebec=1){
+  short <- c("AB", "BC", "SK", "MB", "ON", "QC", "NL", "NT", "NU", "PE", "YT", "NS", "NB", "QC")
+  long <- c("Alberta", "British Columbia", "Saskatchewan", "Manitoba",
+            "Ontario", "Québec", "Newfoundland and Labrador", "Northwest Territories",
+            "Nunavut", "Prince Edward Island", "Yukon", "Nova Scotia", 
+            "New Brunswick", "Quebec")
+  
+  convert <- c()
+  if(to=="toShort"){
+    for(p in provinces){
+      convert <- c(convert, short[which(long==p)])
+    }
+  } else {
+    for(p in provinces){
+      l <- long[which(short==p)]
+      if(p=="QC"){l <- l[quebec]}
+      convert <- c(convert, l)
+    }
+  }
+  return(convert)
+}

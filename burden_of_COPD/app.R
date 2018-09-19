@@ -20,6 +20,9 @@ library(maps) # interactive map
 library(mapproj)
 library(leaflet)
 source("map_plots.R")
+source("Cost.R")
+source("Census.R")
+source("Map.R")
 
 # Left Sidebar
 
@@ -49,8 +52,9 @@ choices_year <- list(
      "2030" = "2030",
      "all" = "all years")
 ids <- c("showGender", "showAgeGroup", "showProvinces", "showYear")
-
-
+rids <- c("radioGender", "radioAgeGroup", "radioProvinces", "radioYear")
+tab_titles <- c("Number of Cases", "Cost", "Map", "Terms", "About")
+num_inputs <- length(ids)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(theme = shinytheme("simplex"),
@@ -93,10 +97,10 @@ ui <- fluidPage(theme = shinytheme("simplex"),
         tabsetPanel(
           id="selectedTab", 
           type="tabs", 
-          tabPanel("Number of Cases",plotlyOutput("plot_n_COPD"),br(),#tableOutput("table_n_COPD"), 
+          tabPanel(tab_titles[1],plotlyOutput("plot_n_COPD"),br(),#tableOutput("table_n_COPD"), 
                     br(), br(),div(id = "SaveLoad",downloadButton("download_plot_n", "Download Plot"))),
                     
-          tabPanel("Cost", selectInput("costType", 
+          tabPanel(tab_titles[2], selectInput("costType", 
                                         h5("Cost Type"), 
                                         choices = list("Total" = "sum",
                                                         "Inpatient" = "hosp", 
@@ -109,7 +113,7 @@ ui <- fluidPage(theme = shinytheme("simplex"),
                                         br(), br(),
                                         div(id = "SaveLoad",
                                             downloadButton("download_plot_cost", "Download Plot"))),
-          tabPanel("Map", 
+          tabPanel(tab_titles[3], 
                    selectInput("costTypeMap", 
                                h5("Cost Type"), 
                                choices = list("Total" = "sum",
@@ -121,8 +125,8 @@ ui <- fluidPage(theme = shinytheme("simplex"),
                    sliderInput(inputId="sliderYear", label="Year", 
                                min=2015, max=2030, value=2015, step = NULL, round = FALSE, 
                                ticks = TRUE, animate = FALSE, sep="")),
-          tabPanel("Terms",  includeMarkdown("./disclaimer.rmd")),
-          tabPanel("About",  includeMarkdown("./about.Rmd"), imageOutput("logos"))
+          tabPanel(tab_titles[4],  includeMarkdown("./disclaimer.rmd")),
+          tabPanel(tab_titles[5],  includeMarkdown("./about.Rmd"), imageOutput("logos"))
 
 
         )
@@ -131,33 +135,37 @@ ui <- fluidPage(theme = shinytheme("simplex"),
 ))
 
 server <- function(input, output, session) {
-   cost <- read_rds("./cost.rds")
+   cost_data <- costData()
+   cost_data <- readRDS(cost_data, "./cost.rds")
+   cost <- cost_data@data
    copdNumber <- read_rds("./copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
-   mapFrame <- getMap()
+   map <- mapData()
+   map <- getMap(map)
    
    observe({
+     for(i in 1:num_inputs){
      if (input$radioGender == "Select") {
-       shinyjs::show (id = ids[1], anim = TRUE)
+       shinyjs::show (id = ids[i], anim = TRUE)
        }
-       else {shinyjs::hide (id = ids[1], anim = TRUE)
+       else {shinyjs::hide (id = ids[i], anim = TRUE)
        }
      
      if (input$radioAgeGroup == "Select") {
        shinyjs::show (id = ids[2], anim = TRUE)
      }
      else shinyjs::hide (id = ids[2], anim = TRUE)
-     
+
      if (input$radioProvinces == "Select") {
        shinyjs::show (id = ids[3], anim = TRUE)
      }
      else shinyjs::hide (id = ids[3], anim = TRUE)
-     
+
      if (input$radioYear == "Select") {
        shinyjs::show (id = ids[4], anim = TRUE)
      }
      else shinyjs::hide (id = ids[4], anim = TRUE)
-     
+      }
  
      })  
    
@@ -233,9 +241,8 @@ server <- function(input, output, session) {
     }
     copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age, sep=" ")
     p <- ggplot(subset (copdNumber, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck))), aes(x = Year, y=value, color = Legend)) + 
-         geom_point() + geom_line() + theme_bw() + labs(x="Year", y="") +  scale_y_continuous("\n", labels = comma)
-
-
+         geom_point() + geom_line() + theme_bw() + labs(x="Year", y="") +  
+      scale_y_continuous("\n", labels = comma)
 
     ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
     
@@ -273,31 +280,18 @@ server <- function(input, output, session) {
     
     dollar  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) 
                            &(type %in% input$costTypeMap) &(province!="Canada")))
-    dollarRange <- c(min(dollar$value), max(dollar$value))
     data  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (Year %in% yearCheck)
                            &(type %in% input$costTypeMap)))
-    print(cost$Year)
-    print(dollar$value)
-    print(dollar[168,])
-    print(genderCheck)
-    print(ageGroupCheck)
-    print(input$radioYear)
-    print(yearCheck)
-    print(max(cost$Year))
-    print(min(cost$Year))
-    print(data$Year)
-    print(input$costTypeMap)
-    print(dollarRange)
-    map_data <- list("data"=data, "dollarRange"=dollarRange, "mapFrame"=mapFrame)
-    return(map_data)
+
+    map@costYear <- data
+    map@costAll <- dollar
+    map <- getCostDensity(map)
+    return(map)
     })
   
   output$map <- renderLeaflet({
-    map_data <- map_plot()
-    data <- map_data$data
-    dollarRange <- map_data$dollarRange
-    mapFrame <- map_data$mapFrame
-    map <- drawMap2(data, dollarRange, mapFrame[[1]], mapFrame[[2]])
+    map <- map_plot()
+    map <- drawMap2(map)
     map
   })
   
