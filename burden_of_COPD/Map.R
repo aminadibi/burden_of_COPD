@@ -21,7 +21,7 @@ mapData <- setClass(
   # Set the default values for the slots. (optional)
   prototype=list(
     col_range = 50,
-    scale_size = 20
+    scale_size = 2
   ),
   
   # Make a function that can test to see if the data is consistent.

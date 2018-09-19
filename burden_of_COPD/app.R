@@ -51,13 +51,18 @@ choices_year <- list(
      "2025" = "2025",
      "2030" = "2030",
      "all" = "all years")
+choices_cost <- list("Total" = "sum",
+                     "Inpatient" = "hosp", 
+                     "Outpatient" = "MSP",
+                     "Pharma" = "pharm")
 ids <- c("showGender", "showAgeGroup", "showProvinces", "showYear")
 rids <- c("radioGender", "radioAgeGroup", "radioProvinces", "radioYear")
 tab_titles <- c("Number of Cases", "Cost", "Map", "Terms", "About")
 num_inputs <- length(ids)
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(theme = shinytheme("simplex"),
+ui <- fluidPage(
+  theme = shinytheme("simplex"),
   shinyjs::useShinyjs(),
   
    # Application title
@@ -97,34 +102,28 @@ ui <- fluidPage(theme = shinytheme("simplex"),
         tabsetPanel(
           id="selectedTab", 
           type="tabs", 
+          tabPanel(tab_titles[3], 
+                   selectInput("costTypeMap", 
+                               h5("Cost Type"), 
+                               choices = choices_cost,
+                               selected = "sum"),
+                   leafletOutput("map"),
+                   sliderInput(inputId="sliderYear", label="Year", 
+                               min=2015, max=2030, value=2015, step = NULL, round = FALSE, 
+                               ticks = TRUE, animate = animationOptions(interval = 300, loop = FALSE), 
+                               sep="")),
           tabPanel(tab_titles[1],plotlyOutput("plot_n_COPD"),br(),#tableOutput("table_n_COPD"), 
                     br(), br(),div(id = "SaveLoad",downloadButton("download_plot_n", "Download Plot"))),
                     
           tabPanel(tab_titles[2], selectInput("costType", 
                                         h5("Cost Type"), 
-                                        choices = list("Total" = "sum",
-                                                        "Inpatient" = "hosp", 
-                                                        "Outpatient" = "MSP",
-                                                        "Pharma" = "pharm"), 
+                                        choices = choices_cost,
                                         selected = "sum"),
                                         plotlyOutput("plot_cost"),
-                                        br(),
-                                        #tableOutput("table_cost"), 
-                                        br(), br(),
+                                        br(),br(), br(),
                                         div(id = "SaveLoad",
                                             downloadButton("download_plot_cost", "Download Plot"))),
-          tabPanel(tab_titles[3], 
-                   selectInput("costTypeMap", 
-                               h5("Cost Type"), 
-                               choices = list("Total" = "sum",
-                                              "Inpatient" = "hosp", 
-                                              "Outpatient" = "MSP",
-                                              "Pharma" = "pharm"), 
-                               selected = "sum"),
-                   leafletOutput("map"),
-                   sliderInput(inputId="sliderYear", label="Year", 
-                               min=2015, max=2030, value=2015, step = NULL, round = FALSE, 
-                               ticks = TRUE, animate = FALSE, sep="")),
+
           tabPanel(tab_titles[4],  includeMarkdown("./disclaimer.rmd")),
           tabPanel(tab_titles[5],  includeMarkdown("./about.Rmd"), imageOutput("logos"))
 
@@ -144,30 +143,15 @@ server <- function(input, output, session) {
    map <- getMap(map)
    
    observe({
+     inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces, input$radioYear)
      for(i in 1:num_inputs){
-     if (input$radioGender == "Select") {
+     if (inputRadio[i] == "Select") {
        shinyjs::show (id = ids[i], anim = TRUE)
        }
        else {shinyjs::hide (id = ids[i], anim = TRUE)
        }
-     
-     if (input$radioAgeGroup == "Select") {
-       shinyjs::show (id = ids[2], anim = TRUE)
-     }
-     else shinyjs::hide (id = ids[2], anim = TRUE)
-
-     if (input$radioProvinces == "Select") {
-       shinyjs::show (id = ids[3], anim = TRUE)
-     }
-     else shinyjs::hide (id = ids[3], anim = TRUE)
-
-     if (input$radioYear == "Select") {
-       shinyjs::show (id = ids[4], anim = TRUE)
-     }
-     else shinyjs::hide (id = ids[4], anim = TRUE)
-      }
  
-     })  
+     }})  
    
    output$download_plot_n = downloadHandler(
      filename = function() {
@@ -278,13 +262,10 @@ server <- function(input, output, session) {
     }
     yearCheck <- input$sliderYear
     
-    dollar  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) 
+    map@costAll  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) 
                            &(type %in% input$costTypeMap) &(province!="Canada")))
-    data  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (Year %in% yearCheck)
+    map@costYear  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (Year %in% yearCheck)
                            &(type %in% input$costTypeMap)))
-
-    map@costYear <- data
-    map@costAll <- dollar
     map <- getCostDensity(map)
     return(map)
     })
