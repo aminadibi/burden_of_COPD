@@ -1,4 +1,6 @@
 source('helper_functions.R')
+source('initialize.R')
+library(RColorBrewer)
 mapData <- setClass(
   # Set the name for the class
   "mapData",
@@ -14,14 +16,20 @@ mapData <- setClass(
     regions = "SpatialPolygonsDataFrame",
     prov_red = "character",
     costDensity = "numeric",
-    provinces = "character"
+    provinces = "character",
+    pal="character",
+    palette="character",
+    group="character",
+    plotLabel = "character",
+    digits = "numeric"
     
   ),
   
   # Set the default values for the slots. (optional)
   prototype=list(
     col_range = 50,
-    scale_size = 2
+    scale_size = 5,
+    layers = 1
   ),
   
   # Make a function that can test to see if the data is consistent.
@@ -33,85 +41,6 @@ mapData <- setClass(
     }
     return(TRUE)
   }
-)
-
-setGeneric(name="drawMap2",
-           def=function(object)
-           {
-             standardGeneric("drawMap2")
-           }
-)
-setMethod(f="drawMap2",signature="mapData",
-          definition=function(object){
-              
-              pal <- leaflet::colorNumeric(
-                viridis_pal(option = "D")(object@scale_size), 
-                domain = range(object@min_pop, object@max_pop),
-                na.color="grey")
-              object@regions$Pop <- object@costDensity
-              pop <- getCost(object@costYear, object@prov_red)
-              print(object@costDensity)
-              print(object@min_pop)
-              print(object@max_pop)
-              prov2 <- provinceConvert(object@prov_red, to="long")
-              object@regions$provinces <- prov2
-              cost_labels <- round(pop$pop, digits=-5)
-              cost_labels <- formatC(cost_labels, big.mark=" ", digits=10)
-              object@regions$labels <- cost_labels
-              m <- leaflet() %>% setView(lng = -120, lat = 60, zoom = 4)  %>%
-                addTiles(group="basemap") %>%
-                addPolygons(data=object@regions, opacity=0.5, fillOpacity=0.8, group="cansimp",
-                            color="white", weight=0.8, fillColor=~pal(Pop),
-                            highlightOptions = highlightOptions(
-                              color = "white", opacity = 1, weight = 2, fillOpacity = 1,
-                              bringToFront = TRUE, sendToBack = TRUE),
-                            popup = paste(object@regions$provinces, "<br>",
-                                          "Cost: $", object@regions$labels, "<br>")) %>%
-                addLayersControl(overlayGroups = c("basemap", "province", "cansimp")) %>%
-                addLegend("bottomleft", pal = pal, values=object@regions$Pop,
-                          title = "Cost", group="cansimp",
-                          opacity = 1)
-              return(m)
-          }
-)
-
-setGeneric(name="getMap",
-           def=function(object)
-           {
-             standardGeneric("getMap")
-           }
-)
-setMethod(f="getMap",signature="mapData",
-          definition=function(object){
-              can1<-getData('GADM', country="CAN", level=1) 
-              provinces <- unique(can1$NAME_1)
-              object@provinces <- provinces
-              prov_red <- can1$NAME_1
-              mapExtent <- rbind(c(-156, 80), c(-68, 19))
-              #newProj <- CRS("+proj=poly +lat_0=0 +lon_0=-100 +x_0=0 
-              #+y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-              newProj <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-              mapExtentPr <- spTransform(SpatialPoints(mapExtent, 
-                                                       proj4string=CRS("+proj=longlat")),
-                                         newProj)
-              
-              can1Pr <- spTransform(can1, newProj)
-              prov_red <- provinceConvert(prov_red, "toShort")
-              can2 <- can1Pr[can1Pr$NAME_1 %in% provinces,]
-              
-              #can_simp <- gSimplify(can2, tol=10000)
-              can_simp <- gSimplify(can2, tol=0.1)
-              regions <- gBuffer(can_simp, byid=TRUE, width=0)
-              regions <- SpatialPolygonsDataFrame(spTransform(regions,
-                                                              CRS("+proj=longlat +ellps=sphere +no_defs")),
-                                                  data.frame(Region=names(regions),
-                                                             row.names=names(regions),
-                                                             stringsAsFactors=FALSE))
-              object@regions <- regions
-              object@prov_red <- prov_red
-
-            return(object)
-          }
 )
 
 setGeneric(name="dataReorder",
@@ -133,7 +62,6 @@ setMethod(f="dataReorder",signature="mapData",
             return(newOrder)
           }
 )
-
 setGeneric(name="getCostDensity",
            def=function(object)
            {
@@ -184,6 +112,133 @@ setMethod(f="getCostDensity",signature="mapData",
             return(object)
           }
 )
+
+setGeneric(name="setPalette",
+           def=function(object, palette)
+           {
+             standardGeneric("setPalette")
+           }
+)
+setMethod(f="setPalette",signature="mapData",
+          definition=function(object, palette="viridis"){
+            if(names(palette)=="viridis"){
+              pal = viridis_pal(option = palette)(object@scale_size)
+            } else if (names(palette)=="brewer"){
+              coul = brewer.pal(4, palette) 
+              pal = colorRampPalette(coul)(25)
+              pal = rev(pal)
+            }
+            object@pal = pal
+            return(object)
+          }
+)
+
+createMap <- setClass(
+  # Set the name for the class
+  "createMap",
+  
+  # Define the slots
+  slots = c(
+    mapDataList = "list",
+    groups = "character",
+    layers = "numeric"
+    
+  ),
+  
+  # Set the default values for the slots. (optional)
+  prototype=list(
+
+  ),
+  
+  # Make a function that can test to see if the data is consistent.
+  # This is not called if you have an initialize function defined!
+  validity=function(object)
+  {
+    if((object@x < 0) || (object@y < 0)) {
+      return("A negative number for one of the coordinates was given.")
+    }
+    return(TRUE)
+  }
+)
+
+setGeneric(name="drawMap",
+           def=function(object)
+           {
+             standardGeneric("drawMap")
+           }
+)
+setMethod(f="drawMap",signature="createMap",
+          definition=function(object){
+            
+ 
+              m <- leaflet() %>% setView(lng = -100, lat = 60, zoom = 3)%>%
+                addTiles(group="basemap") 
+                for(i in 1:object@layers){
+                  mapLayer <- object@mapDataList[[i]]
+                  pal <- leaflet::colorNumeric(
+                    mapLayer@pal, 
+                    domain = range(mapLayer@min_pop, mapLayer@max_pop),
+                    na.color="grey")
+                  mapLayer@regions$Pop <- mapLayer@costDensity
+                  pop <- getCost(mapLayer@costYear, mapLayer@prov_red)
+                  prov2 <- provinceConvert(mapLayer@prov_red, to="long")
+                  mapLayer@regions$provinces <- prov2
+                  cost_labels <- round(pop$pop, digits=mapLayer@digits)
+                  cost_labels <- formatC(cost_labels, big.mark=" ", digits=10)
+                  mapLayer@regions$labels <- cost_labels
+                  nodata <- which(mapLayer@regions$Pop==0)
+                  mapLayer@regions$Pop[nodata] = NA
+                  mapLayer@regions$labels[nodata] = "No Data"
+                m <- m %>% addPolygons(data=mapLayer@regions, opacity=0.5, fillOpacity=0.8, group=mapLayer@group,
+                            color="white", weight=0.8, fillColor=~pal(Pop),
+                            highlightOptions = highlightOptions(
+                              color = "white", opacity = 1, weight = 2, fillOpacity = 1,
+                              bringToFront = TRUE, sendToBack = TRUE),
+                            popup = paste(mapLayer@regions$provinces, "<br>",
+                                          mapLayer@plotLabel, mapLayer@regions$labels, "<br>")) %>%
+                addLegend("bottomright", pal = pal, values=mapLayer@regions$Pop,
+                          title = object@groups[i], group=object@groups[i],
+                          opacity = 1, na.label="No Data")
+                }
+                m <- m %>% addLayersControl(overlayGroups = c(object@groups)) %>%
+                  hideGroup(object@groups[2:object@layers])
+
+              return(m)
+          }
+)
+
+setMethod(f="initialize", signature="mapData",
+          definition=function(.Object,canMap,
+                              digits, group, plotLabel,
+                              palette){
+            
+            .Object@regions <- canMap@regions      
+            .Object@prov_red <- canMap@prov_red
+            .Object@provinces <- canMap@provinces
+            .Object@group <- group
+            .Object@digits <- digits
+            .Object@plotLabel <- plotLabel
+            .Object <- setPalette(.Object, palette)
+            return(.Object) }
+          )
+
+setMethod(f="initialize", signature="createMap",
+          definition=function(.Object, groups, layers, mapDataList){
+            .Object@mapDataList <- mapDataList
+            .Object@groups <- groups
+            .Object@layers <- layers
+
+            return(.Object) }
+)
+
+
+
+
+
+
+
+
+
 
 
 

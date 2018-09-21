@@ -23,6 +23,7 @@ source("map_plots.R")
 source("Cost.R")
 source("Census.R")
 source("Map.R")
+source("initialize.R")
 
 # Left Sidebar
 
@@ -59,6 +60,7 @@ ids <- c("showGender", "showAgeGroup", "showProvinces", "showYear")
 rids <- c("radioGender", "radioAgeGroup", "radioProvinces", "radioYear")
 tab_titles <- c("Number of Cases", "Cost", "Map", "Terms", "About")
 num_inputs <- length(ids)
+initialize = TRUE
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -79,20 +81,20 @@ ui <- fluidPage(
           checkboxGroupInput("gender", label = NA,choices = choices_gender,selected = choices_gender$all))),
         
         # Age Group
-        radioButtons("radioAgeGroup", "Age Group", c("all" = "all ages","select" = "Select")),
+        radioButtons("radioAgeGroup", "Age Group", c("all" = "All","select" = "Select")),
       
         shinyjs::hidden(div(id = ids[2], 
           checkboxGroupInput("ageGroup", NA, choices = choices_age, selected = choices_age$all))),
         
         # Provinces
-        radioButtons("radioProvinces", "Province",c("overall Canada" = "Canada", "select" = "Select")),
+        radioButtons("radioProvinces", "Province",c("overall Canada" = "All", "select" = "Select")),
                        
         shinyjs::hidden(div(id = ids[3], 
           checkboxGroupInput("province", NA, 
                             choices = choices_prov,
                             selected = choices_prov$Canada))),
         # Year
-        radioButtons("radioYear", "Year",c("all" = "all years","select" = "Select")),
+        radioButtons("radioYear", "Year",c("all" = "All","select" = "Select")),
 
         shinyjs::hidden(div(id = ids[4],
           checkboxGroupInput("year", label = NA, choices = choices_year, selected = choices_year$all)))),
@@ -107,7 +109,7 @@ ui <- fluidPage(
                                h5("Cost Type"), 
                                choices = choices_cost,
                                selected = "sum"),
-                   leafletOutput("map"),
+                   leafletOutput("map"),br(),
                    sliderInput(inputId="sliderYear", label="Year", 
                                min=2015, max=2030, value=2015, step = NULL, round = FALSE, 
                                ticks = TRUE, animate = animationOptions(interval = 300, loop = FALSE), 
@@ -139,8 +141,8 @@ server <- function(input, output, session) {
    cost <- cost_data@data
    copdNumber <- read_rds("./copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
-   map <- mapData()
-   map <- getMap(map)
+   dataList <- list("Cost"=cost, "copdNumber"=copdNumber)
+   canMap <- new("canadaMap", filename=mapSettings$filename, initialize=FALSE)
    
    observe({
      inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces, input$radioYear)
@@ -176,19 +178,21 @@ server <- function(input, output, session) {
   })
   
   cost_plot <- reactive ({ 
+
     if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
       genderCheck <- input$gender
     }
+    
 
-    if (input$radioAgeGroup == "all ages") {
+    if (input$radioAgeGroup == "All") {
       ageGroupCheck <- "all ages"
     } else {
       ageGroupCheck <- input$ageGroup
     }
-    
-    if (input$radioProvinces == "Canada") {
+
+    if (input$radioProvinces == "All") {
       provinceCheck <- "Canada"
     } else {
       provinceCheck <- input$province
@@ -212,13 +216,13 @@ server <- function(input, output, session) {
       genderCheck <- input$gender
     }
     
-    if (input$radioAgeGroup == "all ages") {
+    if (input$radioAgeGroup == "All") {
       ageGroupCheck <- "all ages"
     } else {
       ageGroupCheck <- input$ageGroup
     }
     
-    if (input$radioProvinces == "Canada") {
+    if (input$radioProvinces == "All") {
       provinceCheck <- "Canada"
     } else {
       provinceCheck <- input$province
@@ -243,37 +247,53 @@ server <- function(input, output, session) {
   }, deleteFile = FALSE)
   
 
-  map_plot <- reactive({
+  getMapData <- reactive({
     if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
       genderCheck <- input$gender
     }
     
-    if (input$radioAgeGroup == "all ages") {
+    if (input$radioAgeGroup == "All") {
       ageGroupCheck <- "all ages"
     } else {
       ageGroupCheck <- input$ageGroup
     }
-    if (input$radioYear == "all years") {
+    if (input$radioYear == "All") {
       yearCheck <- seq(from=min(cost$Year), to=max(cost$Year), by=1)
     } else {
       yearCheck <- as.numeric(input$year)
     }
     yearCheck <- input$sliderYear
-    
-    map@costAll  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) 
-                           &(type %in% input$costTypeMap) &(province!="Canada")))
-    map@costYear  <- subset(cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (Year %in% yearCheck)
-                           &(type %in% input$costTypeMap)))
-    map <- getCostDensity(map)
-    return(map)
+
+    mapDataList <- mapSettings$mapDataList
+    for(i in 1:mapSettings$layers){
+      data <- dataList[[i]]
+      mapData <- new("mapData", canMap=canMap,digits=mapSettings$digits[i], 
+                      group=mapSettings$groups[i], 
+                     plotLabel=mapSettings$plotLabels[i], palette=mapSettings$palette[i])
+      costAll  <- subset(data, ((gender %in% genderCheck) & (age %in% ageGroupCheck) &(province!="Canada")))
+      costYear  <- subset(data, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (Year %in% yearCheck)))
+      if("type" %in% colnames(data)){
+        mapData@costAll <- subset(costAll, ((type %in% input$costTypeMap)))
+        mapData@costYear <- subset(costYear, ((type %in% input$costTypeMap)))
+      } else {
+        mapData@costAll <- costAll
+        mapData@costYear <- costYear
+      }
+      mapData <- getCostDensity(mapData)
+      mapDataList[[i]] <- mapData
+
+    }
+    return(mapDataList)
     })
   
   output$map <- renderLeaflet({
-    map <- map_plot()
-    map <- drawMap2(map)
-    map
+      mapDataList <- getMapData()
+      map <- new("createMap", layers=mapSettings$layers, 
+                 groups = mapSettings$groups, mapDataList=mapDataList)
+      map <- drawMap(map)
+      map
   })
   
 }
