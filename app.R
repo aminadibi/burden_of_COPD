@@ -106,7 +106,7 @@ ui <- fluidPage(
                          includeMarkdown(paste0("./static_data/", settings$markdownFile))
 
                      } else if(tab_inout[k]=="image"){
-                       imageOutput(settings$imFile)
+                       imageOutput(settings$label[k])
                        }
 
 
@@ -141,61 +141,82 @@ server <- function(input, output, session) {
 
      }})
 
-   output$download_plot_n = downloadHandler(
-     filename = function() {
-       paste("COPD_Projected_Prevalence_", Sys.Date(), ".png", sep="")
-     },    content = function(file) {
-       ggsave(file, device = "png", width=11, height=8.5)
 
-     }
-   )
-
-   output$download_plot_cost = downloadHandler(
-     filename = function() {
-       paste("COPD_Projected_cost_", Sys.Date(), ".png", sep="")
-     },    content = function(file) {
-       ggsave(file, device = "png", width=11, height=8.5)
-
-     }
-   )
-
-  output$plot_cost <- renderPlotly({
-    cost_plot()
-  })
-
-  cost_plot <- reactive ({
-
+  lapply(1:metaData@tabs, function(i){
+    settings = metaData@tab_settings[[i]]
+    tab_inout = metaData@tab_inout[[i]]
+    lapply(1:length(tab_inout), function(k){
+      l=1
+      if(tab_inout[k]=="plotlyOutput"){
+        output[[settings$label[k]]]<- renderPlotly({
+          inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces, input$radioYear)
+          p <- reactive({do.call(settings$functions[l], args=list())})
+          p()
+        })
+      } else if(tab_inout[k]=="download"){
+        output[[settings$label[k]]] <- downloadHandler(
+          filename = function(){
+            paste(settings$png_name, Sys.Date(), ".png", sep="")},
+          content = function(file) {
+            ggsave(file, device="png", width=11, height=8.5)})
+      } else if(tab_inout[k]=="image"){
+        print(settings$imFile)
+        output[[settings$label[k]]] <- renderImage({
+          width  <- session$clientData$output_logos_width
+          height <- session$clientData$output_logos_height
+          # Return a list containing the filename
+          list(src = paste0("./static_data/",settings$imFile),
+               contentType = 'image/png',
+               width = width,
+               alt = "Logos")
+        }, deleteFile = FALSE)
+      } else if(tab_inout[k]=="leafletOutput"){
+        output[[settings$label[k]]] <- renderLeaflet({
+          p <- reactive({do.call(settings$functions[l], args=list())})
+          mapDataList <- p()
+          map <- new("createMap", layers=mapSettings$layers,
+                     groups = mapSettings$groups, mapDataList=mapDataList)
+          map <- drawMap(map)
+          map
+        })
+      }
+          }
+        )
+      })
+  
+  cost_plot <- function(){
+    
+    print("line")
     if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
-      genderCheck <- input$gender
+      genderCheck <- input$Gender
     }
 
 
     if (input$radioAgeGroup == "All") {
       ageGroupCheck <- "all ages"
     } else {
-      ageGroupCheck <- input$ageGroup
+      ageGroupCheck <- input$AgeGroup
     }
 
     if (input$radioProvinces == "All") {
       provinceCheck <- "Canada"
     } else {
-      provinceCheck <- input$province
+      provinceCheck <- input$Provinces
     }
+    print(input$radioProvinces)
    cost$Legend <- interaction(cost$province, cost$gender, cost$age, sep=" ")
    p <- ggplot(subset (cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck) & (type %in% input$costType))), aes(x = Year, y=value/1000000, fill = Legend)) +
         geom_bar(stat = "identity", position = "dodge")  + labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw()
+   print(class(p))
+   ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F,
+                           modeBarButtonsToRemove=buttonremove) %>%
+     layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
 
-   ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
+  }
 
-  })
-
-   output$plot_n_COPD <- renderPlotly({
-     n_copd_plot()
-   })
-
-  n_copd_plot <- reactive ({
+  n_copd_plot <- function(){
     if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
@@ -220,20 +241,9 @@ server <- function(input, output, session) {
 
     ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F, modeBarButtonsToRemove=buttonremove) %>% layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
 
-  })
+  }
 
-  output$logos <- renderImage({
-    width  <- session$clientData$output_logos_width
-    height <- session$clientData$output_logos_height
-    # Return a list containing the filename
-    list(src = "./logos2.png",
-         contentType = 'image/png',
-         width = width,
-         alt = "This is alternate text")
-  }, deleteFile = FALSE)
-
-
-  getMapData <- reactive({
+  getMapData <- function(){
     if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
@@ -272,15 +282,9 @@ server <- function(input, output, session) {
 
     }
     return(mapDataList)
-    })
+    }
 
-  output$map <- renderLeaflet({
-      mapDataList <- getMapData()
-      map <- new("createMap", layers=mapSettings$layers,
-                 groups = mapSettings$groups, mapDataList=mapDataList)
-      map <- drawMap(map)
-      map
-  })
+
 
 }
 
