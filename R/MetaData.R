@@ -10,7 +10,8 @@ setClass(
     sidebar_choices_short = "list",
     sidebar_choices_long = "list",
     tab_settings = "list",
-    tab_inout = "list"
+    tab_inout = "list",
+    tab_input = "list"
   ),
   prototype = list(
     

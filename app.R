@@ -74,11 +74,12 @@ ui <- fluidPage(
             tab_inout = metaData@tab_inout[[i]]
             tabPanel(metaData@tab_titles[i],
                    lapply(1:length(tab_inout), function(k){
-
+                      l=1
                      if(tab_inout[k]=="selectInput"){
+                       print(settings$choices[k])
                         selectInput(settings$label[k],
                                     h5(settings$title[k]),
-                                    choices = settings$choices[k],
+                                    choices = settings$choices[[l]],
                                     selected = settings$selected[k])}
                      else if(tab_inout[k]=="leafletOutput"){
                        leafletOutput(settings$label[k])
@@ -130,9 +131,9 @@ server <- function(input, output, session) {
        print("Check")
        print(input$radioAgeGroup)
        print(input[['radioGender']])
-         print(input$Gender)
+         print(input$selectedTab)
    
-     if (inputRadio[i] == "Select") {
+     if (inputRadio[i] == "Select" && input$selectedTab!="Map") {
        
        shinyjs::show (id = ids[i], anim = TRUE)
        }
@@ -220,19 +221,19 @@ server <- function(input, output, session) {
     if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
-      genderCheck <- input$gender
+      genderCheck <- input$Gender
     }
 
     if (input$radioAgeGroup == "All") {
       ageGroupCheck <- "all ages"
     } else {
-      ageGroupCheck <- input$ageGroup
+      ageGroupCheck <- input$AgeGroup
     }
 
     if (input$radioProvinces == "All") {
       provinceCheck <- "Canada"
     } else {
-      provinceCheck <- input$province
+      provinceCheck <- input$Provinces
     }
     copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age, sep=" ")
     p <- ggplot(subset (copdNumber, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck))), aes(x = Year, y=value, color = Legend)) +
@@ -247,18 +248,18 @@ server <- function(input, output, session) {
     if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
-      genderCheck <- input$gender
+      genderCheck <- input$Gender
     }
 
     if (input$radioAgeGroup == "All") {
       ageGroupCheck <- "all ages"
     } else {
-      ageGroupCheck <- input$ageGroup
+      ageGroupCheck <- input$AgeGroup
     }
     if (input$radioYear == "All") {
       yearCheck <- seq(from=min(cost$Year), to=max(cost$Year), by=1)
     } else {
-      yearCheck <- as.numeric(input$year)
+      yearCheck <- as.numeric(input$Year)
     }
     yearCheck <- input$sliderYear
 

@@ -40,7 +40,7 @@ tab4input <- c()
 tab5input <- c()
 tab1id <- list("label" = c("costTypeMap", "map", "sliderYear"),
                "title" = c("Cost Map", "", "Year"),
-               "choices" = c(choices_cost),
+               "choices" = list(choices_cost),
                "selected" = c("sum"),
                "sliderSettings" = list("min"=2015,
                                     "max"=2030,
@@ -58,7 +58,7 @@ tab2id <- list("label" = c("plot_n_COPD", "download_plot_n"),
                "functions"=c("n_copd_plot"))
 tab3id <- list("label" = c("costType", "plot_cost", "download_plot_cost"),
                "title" = c("Cost Type", "", "Download Plot"),
-               "choices" = c(choices_cost),
+               "choices" = list(choices_cost),
                "selected" = c("sum"),
                "png_name"="COPD_Projected_cost_",
                "functions"=c("cost_plot"))
