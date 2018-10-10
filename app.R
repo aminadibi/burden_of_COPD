@@ -20,6 +20,7 @@ library(htmltools)
 library(maps) # interactive map
 library(mapproj)
 library(leaflet)
+library(sp)
 
 source("./R/Cost.R")
 source("./R/Census.R")
@@ -140,21 +141,26 @@ server <- function(input, output, session) {
      inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
      print("Check")
      for(i in 1:num_inputs){
-       print("Check")
-       print(input$radioAgeGroup)
-       print(input[['radioGender']])
-         print(input$selectedTab)
-         print(i)
+       #print("Check")
+       #print(input$radioAgeGroup)
+       #print(input[['radioGender']])
+        # print(input$selectedTab)
+        # print(i)
    
-     if (inputRadio[i] == "Select" && input$selectedTab!="Map") {
+  
        
-       shinyjs::show (id = ids[i], anim = TRUE)
-       }
-       else {shinyjs::hide (id = ids[i], anim = TRUE)
-       }
-
-     }})
-
+     if (input$selectedTab=="Map") {
+       shinyjs::disable("radioGender")
+       shinyjs::disable("radioAgeGroup")
+       shinyjs::disable("radioProvinces")
+     } else {
+       shinyjs::enable("radioGender")
+       shinyjs::enable("radioAgeGroup")
+       shinyjs::enable("radioProvinces")
+       if (inputRadio[i] == "Select") {shinyjs::show (id = ids[i], anim = TRUE)}
+       else {shinyjs::hide (id = ids[i], anim = TRUE)}
+      }
+       }})
 
   lapply(1:metaData@tabs, function(i){
     settings = metaData@tab_settings[[i]]
