@@ -31,7 +31,7 @@ source("./R/MetaData.R")
 source("./R/helper_functions.R")
 
 load(file="./data/metaData.RData")
-print(metaData)
+#print(metaData)
 
 # Left Sidebar
 
@@ -92,7 +92,7 @@ ui <- fluidPage(
                    lapply(1:length(tab_inout), function(k){
                       l=1
                      if(tab_inout[k]=="selectInput"){
-                       print(settings$choices[k])
+                       #print(settings$choices[k])
                         selectInput(settings$label[k],
                                     h5(settings$title[k]),
                                     choices = settings$choices[[l]],
@@ -142,7 +142,7 @@ server <- function(input, output, session) {
    canMap <- new("canadaMap", filename=mapSettings$filename, initialize=FALSE)
    observe({
      inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
-     print("Check")
+     #print("Check")
      for(i in 1:num_inputs){
        #print("Check")
        #print(input$radioAgeGroup)
@@ -186,7 +186,7 @@ server <- function(input, output, session) {
           content = function(file) {
             ggsave(file, device="png", width=11, height=8.5)})
       } else if(tab_inout[k]=="image"){
-        print(settings$imFile)
+        #print(settings$imFile)
         output[[settings$label[k]]] <- renderImage({
           width  <- session$clientData$output_logos_width
           height <- session$clientData$output_logos_height
@@ -212,7 +212,7 @@ server <- function(input, output, session) {
   
   cost_plot <- function(){
     
-    print("line")
+    #print("line")
     if (input$radioGender == "All") {
       genderCheck <- "all genders"
     } else {
@@ -231,11 +231,11 @@ server <- function(input, output, session) {
     } else {
       provinceCheck <- input$Provinces
     }
-    print(input$radioProvinces)
+    #print(input$radioProvinces)
    cost$Legend <- interaction(cost$province, cost$gender, cost$age, sep=" ")
    p <- ggplot(subset (cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck) & (type %in% input$costType))), aes(x = Year, y=value/1000000, fill = Legend)) +
         geom_bar(stat = "identity", position = "dodge")  + labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw()
-   print(class(p))
+   #print(class(p))
    ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F,
                            modeBarButtonsToRemove=buttonremove) %>%
      layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
