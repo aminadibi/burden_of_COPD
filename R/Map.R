@@ -1,4 +1,4 @@
-#source('../R/helper_functions.R')
+source('./R/helper_functions.R')
 #source('../R/initialize.R')
 library(RColorBrewer)
 
@@ -135,8 +135,8 @@ setMethod(f="setPalette",signature="mapData",
           }
 )
 
+
 setClass(
-  # Set the name for the class
   "createMap",
 
   # Define the slots
@@ -147,7 +147,6 @@ setClass(
 
   ),
 
-  # Set the default values for the slots. (optional)
   prototype=list(
 
   ),
@@ -169,7 +168,8 @@ setGeneric(name="drawMap",
              standardGeneric("drawMap")
            }
 )
-setMethod(f="drawMap",signature="createMap",
+setMethod(f="drawMap",
+          signature="createMap",
           definition=function(object){
 
 
@@ -198,9 +198,14 @@ setMethod(f="drawMap",signature="createMap",
                               bringToFront = TRUE, sendToBack = TRUE),
                             popup = paste(mapLayer@regions$provinces, "<br>",
                                           mapLayer@plotLabel, mapLayer@regions$labels, "<br>")) %>%
-                addLegend("bottomright", pal = pal, values=mapLayer@regions$Pop,
+                addLegend("bottomright", pal = pal, values=c(mapLayer@min_pop, mapLayer@max_pop),
                           title = object@groups[i], group=object@groups[i],
-                          opacity = 1, na.label="No Data")
+                          opacity = 1, na.label="No Data", labels=c("High", "Low"))
+                  print(mapLayer@pal)
+                print("Testing")
+                  # addLegend("bottomright", colors = mapLayer@pal[1], values=c(mapLayer@min_pop, mapLayer@max_pop),
+                  #           title = object@groups[i], group=object@groups[i],
+                  #           opacity = 1, na.label="No Data",labels=c("High"))
                 }
                 m <- m %>% addLayersControl(overlayGroups = c(object@groups)) %>%
                   hideGroup(object@groups[2:object@layers])

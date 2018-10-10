@@ -9,6 +9,7 @@
 
 library(shiny)
 library(shinythemes)
+#library(shinyjs)
 library(ggplot2)
 library(plotly)
 library(scales)
@@ -33,9 +34,10 @@ print(metaData)
 
 # Left Sidebar
 
-ids <- c("showGender", "showAgeGroup", "showProvinces", "showYear")
-rids <- c("radioGender", "radioAgeGroup", "radioProvinces", "radioYear")
+ids <- c("showGender", "showAgeGroup", "showProvinces")
+rids <- c("radioGender", "radioAgeGroup", "radioProvinces")
 tab_titles = metaData@tab_titles
+i=1
 num_inputs <- length(ids)
 initialize = TRUE
 
@@ -47,21 +49,31 @@ ui <- fluidPage(
    # Application title
    titlePanel(metaData@app_title),
    # Sidebar with a slider input for number of bins
-   sidebarLayout(
+   do.call(sidebarLayout, list(
       # SideBar
-      sidebarPanel(
-        lapply(1:metaData@sidebar, function(i){
-          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[i]), 
-                       label=metaData@sidebar_titles[i],
-                       choices=metaData@sidebar_choices_short[[i]],
-                       selected=metaData@sidebar_choices_short[[i]]$all)}),
-        lapply(1:metaData@sidebar, function(i){
-          shinyjs::hidden(div(id = ids[i],
-                              checkboxGroupInput(metaData@sidebar_labels[i], 
-                                                 label = NA,
-                                                 choices = metaData@sidebar_choices_long[[i]],
-                                                 selected = metaData@sidebar_choices_long[[i]]$all)))})
-        ),
+     sidebarPanel(lapply(1:(metaData@sidebar*2), function(k){
+       if(k%%2==0){
+         f = shinyjs::hidden
+         i = k/2
+         arguments = list(div(id = ids[i],
+                              checkboxGroupInput(metaData@sidebar_labels[i],
+                                                 label = NA,choices = metaData@sidebar_choices_long[[i]],
+                                                 selected = metaData@sidebar_choices_long[[i]]$all)))
+         
+       } else{
+         i=(k+1)/2
+         f=radioButtons
+         
+         arguments = list(inputId=paste0("radio", metaData@sidebar_labels[i]), 
+                          label=metaData@sidebar_titles[i],choices=metaData@sidebar_choices_short[[i]],
+                          selected=metaData@sidebar_choices_short[[i]]$all)
+         
+       }
+       do.call(f, arguments)
+       
+       
+     })),
+
 
       
       # Center
@@ -114,7 +126,7 @@ ui <- fluidPage(
 }))
             }))))
 
-))
+)))
 
 server <- function(input, output, session) {
    cost_data <- new("costData")
@@ -125,13 +137,14 @@ server <- function(input, output, session) {
    dataList <- list("Cost"=cost, "copdNumber"=copdNumber)
    canMap <- new("canadaMap", filename=mapSettings$filename, initialize=FALSE)
    observe({
-     inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces, input$radioYear)
+     inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
      print("Check")
      for(i in 1:num_inputs){
        print("Check")
        print(input$radioAgeGroup)
        print(input[['radioGender']])
          print(input$selectedTab)
+         print(i)
    
      if (inputRadio[i] == "Select" && input$selectedTab!="Map") {
        
@@ -150,7 +163,7 @@ server <- function(input, output, session) {
       l=1
       if(tab_inout[k]=="plotlyOutput"){
         output[[settings$label[k]]]<- renderPlotly({
-          inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces, input$radioYear)
+          inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
           p <- reactive({do.call(settings$functions[l], args=list())})
           p()
         })
@@ -255,11 +268,6 @@ server <- function(input, output, session) {
       ageGroupCheck <- "all ages"
     } else {
       ageGroupCheck <- input$AgeGroup
-    }
-    if (input$radioYear == "All") {
-      yearCheck <- seq(from=min(cost$Year), to=max(cost$Year), by=1)
-    } else {
-      yearCheck <- as.numeric(input$Year)
     }
     yearCheck <- input$sliderYear
 

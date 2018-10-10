@@ -56,6 +56,9 @@ getCost <- function(data, provinces){
   return(pop)
 }
 
+customLegend <- function(x){
+  return(0)
+}
 
 
 

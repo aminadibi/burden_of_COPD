@@ -19,11 +19,6 @@ choices_prov <- list(
   "Quebec" = "QC",
   "Saskatchewan" = "SK",
   "all" = "Canada")
-choices_year <- list(
-  "2020" = "2020",
-  "2025" = "2025",
-  "2030" = "2030",
-  "all" = "all years")
 choices_cost <- list("Total" = "sum",
                      "Inpatient" = "hosp",
                      "Outpatient" = "MSP",
@@ -69,14 +64,14 @@ metaData = new("MetaData")
 metaData@app_title = "Burden of COPD in Canada"
 metaData@tabs = 5
 metaData@tab_titles <- c("Map", "Number of Cases", "Cost", "About", "Terms")
-metaData@sidebar = 4
-metaData@sidebar_titles = c("Gender", "Age Group","Province", "Year") 
-metaData@sidebar_labels = c("Gender", "AgeGroup","Provinces", "Year") 
-metaData@sidebar_choices_long = list(choices_gender, choices_age, choices_prov, choices_year)
+metaData@sidebar = 3
+metaData@sidebar_titles = c("Gender", "Age Group","Province") 
+metaData@sidebar_labels = c("Gender", "AgeGroup","Provinces") 
+metaData@sidebar_choices_long = list(choices_gender, choices_age, choices_prov)
 metaData@sidebar_choices_short = list(list("all" = "All","select" = "Select"),
                                       list("all" = "All","select" = "Select"),
-                                      list("all" = "All","select" = "Select"),
                                       list("all" = "All","select" = "Select"))
+metaData@sidebar_skip = c(1)
 metaData@tab_inout = list(tab1, tab2, tab3, tab4, tab5)
 metaData@tab_settings = list(tab1id, tab2id, tab3id, tab4id, tab5id)
 metaData@tab_input = list(tab1input, tab2input, tab3input, tab4input, tab5input)
