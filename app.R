@@ -79,7 +79,10 @@ ui <- fluidPage(
       
       # Center
       mainPanel(
-        
+        #hiding errors
+        tags$style(type="text/css",
+                   ".shiny-output-error { visibility: hidden; }",
+                   ".shiny-output-error:before { visibility: hidden; }"),
         do.call(tabsetPanel, c(id="selectedTab",type="tabs",
 
           lapply(1:metaData@tabs, function(i){
@@ -147,12 +150,15 @@ server <- function(input, output, session) {
         # print(input$selectedTab)
         # print(i)
    
-  
-       
      if (input$selectedTab=="Map") {
+       updateRadioButtons(session, "radioGender", selected = "All")
+       updateRadioButtons(session, "radioAgeGroup", selected = "All")
+       updateRadioButtons(session, "radioProvinces", selected = "All")
        shinyjs::disable("radioGender")
        shinyjs::disable("radioAgeGroup")
        shinyjs::disable("radioProvinces")
+       shinyjs::hide (id = ids[i], anim = TRUE)
+
      } else {
        shinyjs::enable("radioGender")
        shinyjs::enable("radioAgeGroup")
