@@ -108,8 +108,8 @@ setMethod(f="getCostDensity",signature="mapData",
             popYear <- getCost(object@costYear, object@prov_red)
             popYear <- popYear$pop
             object@costDensity <- popYear/population
-            print(object@min_pop)
-            print(object@max_pop)
+            #print(object@min_pop)
+            #print(object@max_pop)
             return(object)
           }
 )
@@ -201,8 +201,8 @@ setMethod(f="drawMap",
                 addLegend("bottomright", pal = pal, values=c(mapLayer@min_pop, mapLayer@max_pop),
                           title = object@groups[i], group=object@groups[i],
                           opacity = 1, na.label="No Data", labels=c("High", "Low"))
-                  print(mapLayer@pal)
-                print("Testing")
+                  #print(mapLayer@pal)
+                #print("Testing")
                   # addLegend("bottomright", colors = mapLayer@pal[1], values=c(mapLayer@min_pop, mapLayer@max_pop),
                   #           title = object@groups[i], group=object@groups[i],
                   #           opacity = 1, na.label="No Data",labels=c("High"))
