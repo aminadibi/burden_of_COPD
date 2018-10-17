@@ -160,11 +160,30 @@ server <- function(input, output, session) {
    cost <- cost_data@data
    copdNumber <- read_rds("./data/copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
-   dataList <- list("Cost"=cost, "copdNumber"=copdNumber)
+   dataList <- list("CostDensity"=cost,"Cost"=cost, "copdNumber"=copdNumber)
    canMap <- new("canadaMap", filename=mapSettings$filename, initialize=FALSE)
+   group_prev <<- "new"
    observe({
-     #inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
-     print("Check")
+     if(input$selectedTab=="Map"&& !is.null(input$map_groups)){
+       
+       group = input$map_groups
+       print(group)
+       print(input$map_groups_baselayerchange)
+       group = group[-which(group=="basemap")]
+       print(length(group))
+       if(length(group)==1){
+         group_prev <<- group
+         print(group_prev)
+       }else{
+         group = c(setdiff(group_prev, group), setdiff(group, group_prev))
+         group_prev <<- group
+       }
+       g = which(mapSettings$groups!=group)
+
+       proxy = leafletProxy("map")
+       proxy %>% hideGroup(mapSettings$groups[g])
+     }
+     
      if(input$selectedTab %in% c("Number of Cases","Cost")){
        print(input$selectedTab)
        z = which(c("Number of Cases","Cost")==input$selectedTab)+1
@@ -183,7 +202,6 @@ server <- function(input, output, session) {
        }
 
      }}})
-    print("still working")
 
   lapply(1:metaData@tabs, function(i){
     settings = metaData@tab_settings[[i]]
@@ -215,16 +233,15 @@ server <- function(input, output, session) {
                alt = "Logos")
         }, deleteFile = FALSE)
       } else if(tab_inout[k]=="leafletOutput"){
-        print("Working...")
         output[[settings$label[k]]] <- renderLeaflet({
           p <- reactive({do.call(settings$functions[l], args=list())})
           mapDataList <- p()
-          print("Good still")
           map <- new("createMap", layers=mapSettings$layers,
-                     groups = mapSettings$groups, mapDataList=mapDataList)
+                     groups = mapSettings$groups, legendLabels=mapSettings$legendLabels,
+                     mapDataList=mapDataList)
           map <- drawMap(map)
-          print("Still okay")
           map
+          #map <- map %>% clearControls()
         })
       }
           }
@@ -313,11 +330,9 @@ server <- function(input, output, session) {
         mapData@costYear <- costYear
       }
       
-      mapData <- getCostDensity(mapData)
+      mapData <- getCostDensity(mapData, mapSettings$dense[i])
       
       mapDataList[[i]] <- mapData
-      print("Working in getmapdata")
-
     }
     return(mapDataList)
     }

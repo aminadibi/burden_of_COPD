@@ -22,7 +22,8 @@ setClass(
     palette="character",
     group="character",
     plotLabel = "character",
-    digits = "numeric"
+    digits = "numeric",
+    legendLabels = "character"
 
   ),
 
@@ -64,13 +65,13 @@ setMethod(f="dataReorder",signature="mapData",
           }
 )
 setGeneric(name="getCostDensity",
-           def=function(object)
+           def=function(object, dense)
            {
              standardGeneric("getCostDensity")
            }
 )
 setMethod(f="getCostDensity",signature="mapData",
-          definition=function(object){
+          definition=function(object, dense){
 
             file <- "./census_data/T10120180918023605.CSV"
             census <- new("censusData")
@@ -81,19 +82,26 @@ setMethod(f="getCostDensity",signature="mapData",
             population <- census@population[newOrder]
             costAll <- object@costAll
             popAll <- getCost(object@costAll, object@prov_red)
-            #print(popAll)
             cd <- c()
-            for(i in 1:nrow(popAll)){
-              prov <- popAll$provinces[i]
-              prov <- provinceConvert(prov, to="long", quebec=2)
-              # print(prov)
-              # print(popAll$pop[i])
-              # print(census@population[prov])
-              cost <- popAll$pop[i]/census@population[prov]
-              if(is.na(cost)){cost <- 0}
-              cd <- c(cd, cost)
+            if(dense==TRUE){
+              
+              for(i in 1:nrow(popAll)){
+                prov <- popAll$provinces[i]
+                prov <- provinceConvert(prov, to="long", quebec=2)
+                cost <- popAll$pop[i]/census@population[prov]
+                if(is.na(cost)){cost <- 0}
+                  cd <- c(cd, cost)
+              }}
+            else{
+              for(i in 1:nrow(popAll)){
+                prov <- popAll$provinces[i]
+                prov <- provinceConvert(prov, to="long", quebec=2)
+                cost <- popAll$pop[i]
+                if(is.na(cost)){cost <- 0}
+                cd <- c(cd, cost)
+              }
+              
             }
-            #print(cd)
             popAll$cd <- cd
             sub <- which(popAll$cd==0)
             sub <- popAll[-sub,]
@@ -107,9 +115,11 @@ setMethod(f="getCostDensity",signature="mapData",
             object@max_pop <- max_pop
             popYear <- getCost(object@costYear, object@prov_red)
             popYear <- popYear$pop
-            object@costDensity <- popYear/population
-            print(object@min_pop)
-            print(object@max_pop)
+            if(dense==TRUE){
+              object@costDensity <- popYear/population
+            } else {
+              object@costDensity <- popYear
+            }
             return(object)
           }
 )
@@ -122,7 +132,7 @@ setGeneric(name="setPalette",
 )
 setMethod(f="setPalette",signature="mapData",
           definition=function(object, palette="viridis"){
-            cat('~~~ mapData: Setting color palette ~~~')
+            cat('~~~ mapData: Setting color palette ~~~\n')
             if(names(palette)=="viridis"){
               pal = viridis_pal(option = palette)(object@scale_size)
             } else if (names(palette)=="brewer"){
@@ -131,6 +141,7 @@ setMethod(f="setPalette",signature="mapData",
               pal = rev(pal)
             }
             object@pal = pal
+            cat('mapData: color palette set\n')
             return(object)
           }
 )
@@ -143,7 +154,8 @@ setClass(
   slots = c(
     mapDataList = "list",
     groups = "character",
-    layers = "numeric"
+    layers = "numeric",
+    legendLabels = "character"
 
   ),
 
@@ -191,24 +203,43 @@ setMethod(f="drawMap",
                   nodata <- which(mapLayer@regions$Pop==0)
                   mapLayer@regions$Pop[nodata] = NA
                   mapLayer@regions$labels[nodata] = "No Data"
+                  layerId = sapply(1:length(prov2), function(x){paste0("group",i,x)})
+                  layerId2 = object@legendLabels[i]
+                  print(layerId2)
                 m <- m %>% addPolygons(data=mapLayer@regions, opacity=0.5, fillOpacity=0.8, group=mapLayer@group,
-                            color="white", weight=0.8, fillColor=~pal(Pop),
+                            color="white", weight=0.8, fillColor=~pal(Pop),layerId = layerId,
                             highlightOptions = highlightOptions(
                               color = "white", opacity = 1, weight = 2, fillOpacity = 1,
                               bringToFront = TRUE, sendToBack = TRUE),
                             popup = paste(mapLayer@regions$provinces, "<br>",
                                           mapLayer@plotLabel, mapLayer@regions$labels, "<br>")) %>%
-                addLegend("bottomright", pal = pal, values=c(mapLayer@min_pop, mapLayer@max_pop),
+                #clearControls() %>%
+                addLegend("bottomleft", pal = pal, values=c(mapLayer@min_pop, mapLayer@max_pop),
                           title = object@groups[i], group=object@groups[i],
-                          opacity = 1, na.label="No Data", labels=c("High", "Low"))
-                  print(mapLayer@pal)
-                print("Testing")
-                  # addLegend("bottomright", colors = mapLayer@pal[1], values=c(mapLayer@min_pop, mapLayer@max_pop),
-                  #           title = object@groups[i], group=object@groups[i],
-                  #           opacity = 1, na.label="No Data",labels=c("High"))
+                          opacity = 1, na.label="No Data",
+                          layerId=layerId2)
+    
                 }
-                m <- m %>% addLayersControl(overlayGroups = c(object@groups)) %>%
-                  hideGroup(object@groups[2:object@layers])
+                m <- m %>% addLayersControl(overlayGroups = c(object@groups),
+                                            options = layersControlOptions(collapsed=FALSE)) %>%
+                   hideGroup(object@groups[2:object@layers])%>%
+  #                 htmlwidgets::onRender("
+  #   function(el, x) {
+  #     // Navigate the map to the user's location
+  #     this.locate({setView: true});
+  #   }
+  # ")%>%
+                  #map.addLayer(console.log(e.layer));
+                  
+                 htmlwidgets::onRender("
+function(el,x){
+                  this.on('baselayerchange',
+                         function (e) {
+
+                           this.locate({setView: true});
+                           this.removeControl(legend1);
+                            legend2.addTo(this);
+                         })}")
 
               return(m)
           }
@@ -230,10 +261,12 @@ setMethod(f="initialize", signature="mapData",
           )
 
 setMethod(f="initialize", signature="createMap",
-          definition=function(.Object, groups, layers, mapDataList){
+          definition=function(.Object, groups, layers, legendLabels,
+                              mapDataList){
             .Object@mapDataList <- mapDataList
             .Object@groups <- groups
             .Object@layers <- layers
+            .Object@legendLabels <- legendLabels
 
             return(.Object) }
 )
