@@ -20,7 +20,6 @@ library(htmltools)
 library(maps) # interactive map
 library(mapproj)
 library(leaflet)
-library(sp)
 
 source("./R/Cost.R")
 source("./R/Census.R")
@@ -31,12 +30,13 @@ source("./R/MetaData.R")
 source("./R/helper_functions.R")
 
 load(file="./data/metaData.RData")
-#print(metaData)
+print(metaData)
 
 # Left Sidebar
 
 ids <- c("showGender", "showAgeGroup", "showProvinces")
 rids <- c("radioGender", "radioAgeGroup", "radioProvinces")
+s_tabs = c(2,3)
 tab_titles = metaData@tab_titles
 i=1
 num_inputs <- length(ids)
@@ -46,91 +46,113 @@ initialize = TRUE
 ui <- fluidPage(
   theme = shinytheme("simplex"),
   shinyjs::useShinyjs(),
+  
+  # Use the Google webfont "Source Sans Pro"
+  tags$link(
+    href=paste0("http://fonts.googleapis.com/css?",
+                "family=Source+Sans+Pro:300,600,300italic"),
+    rel="stylesheet", type="text/css"),
+  tags$style(type="text/css",
+             "body {font-family: 'Source Sans Pro'}"
+  ),
 
    # Application title
    titlePanel(metaData@app_title),
-   # Sidebar with a slider input for number of bins
-   do.call(sidebarLayout, list(
-      # SideBar
-     sidebarPanel(lapply(1:(metaData@sidebar*2), function(k){
-       if(k%%2==0){
-         f = shinyjs::hidden
-         i = k/2
-         arguments = list(div(id = ids[i],
-                              checkboxGroupInput(metaData@sidebar_labels[i],
-                                                 label = NA,choices = metaData@sidebar_choices_long[[i]],
-                                                 selected = metaData@sidebar_choices_long[[i]]$all)))
-         
-       } else{
-         i=(k+1)/2
-         f=radioButtons
-         
-         arguments = list(inputId=paste0("radio", metaData@sidebar_labels[i]), 
-                          label=metaData@sidebar_titles[i],choices=metaData@sidebar_choices_short[[i]],
-                          selected=metaData@sidebar_choices_short[[i]]$all)
-         
-       }
-       do.call(f, arguments)
-       
-       
-     })),
-
-
-      
-      # Center
-      mainPanel(
-        #hiding errors
-        tags$style(type="text/css",
-                   ".shiny-output-error { visibility: hidden; }",
-                   ".shiny-output-error:before { visibility: hidden; }"),
-        do.call(tabsetPanel, c(id="selectedTab",type="tabs",
-
-          lapply(1:metaData@tabs, function(i){
-            settings = metaData@tab_settings[[i]]
-            tab_inout = metaData@tab_inout[[i]]
-            tabPanel(metaData@tab_titles[i],
-                   lapply(1:length(tab_inout), function(k){
-                      l=1
-                     if(tab_inout[k]=="selectInput"){
-                       #print(settings$choices[k])
-                        selectInput(settings$label[k],
-                                    h5(settings$title[k]),
-                                    choices = settings$choices[[l]],
-                                    selected = settings$selected[k])}
-                     else if(tab_inout[k]=="leafletOutput"){
-                       leafletOutput(settings$label[k])
-                     }
-                     else if(tab_inout[k]=="sliderInput"){
-                       sliderInput(inputId=settings$label[k],
-                                   label=settings$title[k],
-                                   min=settings$sliderSettings$min,
-                                   max=settings$sliderSettings$max,
-                                   value=settings$sliderSettings$value,
-                                   step = settings$sliderSettings$step,
-                                   round = settings$sliderSettings$round,
-                                   ticks = settings$sliderSettings$ticks,
-                                   animate = animationOptions(
-                                     interval=settings$sliderSettings$animate_interval,
-                                     loop=settings$sliderSettings$animate_loop),
-                                   sep=settings$sliderSettings$sep)
-                     }
-                     else if(tab_inout[k]=="plotlyOutput"){
-                       plotlyOutput(settings$label[k])
-
-                     } else if(tab_inout[k]=="download"){
-                       div(id = "SaveLoad",downloadButton(settings$label[k], settings$title[k]))
-                     } else if(tab_inout[k]=="markdown"){
-                         includeMarkdown(paste0("./static_data/", settings$markdownFile))
-
-                     } else if(tab_inout[k]=="image"){
-                       imageOutput(settings$label[k])
-                       }
-
-
-}))
-            }))))
-
-)))
+   do.call(tabsetPanel, c(id="selectedTab",type="tabs",
+                         
+                         lapply(1:metaData@tabs, function(i){
+                           z = i
+                           settings = metaData@tab_settings[[i]]
+                           tab_inout = metaData@tab_inout[[i]]
+                          
+                           tabPanel(metaData@tab_titles[i],
+                                    lapply(1:1, function(j){
+                                      l=1
+                                      if(i %in% s_tabs){
+                                        do.call(sidebarLayout, list(
+                                          # SideBar
+                                          sidebarPanel(lapply(1:(metaData@sidebar*2), function(k){
+                                            if(k%%2==0){
+                                              f = shinyjs::hidden
+                                              i = k/2
+                                              arguments = list(div(id = paste0(ids[i],z),
+                                                                   checkboxGroupInput(paste0(metaData@sidebar_labels[i], z),
+                                                                                      label = NA,choices = metaData@sidebar_choices_long[[i]],
+                                                                                      selected = metaData@sidebar_choices_long[[i]]$all)))
+                                              
+                                            } else{
+                                              i=(k+1)/2
+                                              f=radioButtons
+                                              print(paste0("radio", metaData@sidebar_labels[i],z))
+                                              arguments = list(inputId=paste0("radio", metaData@sidebar_labels[i],z), 
+                                                               label=metaData@sidebar_titles[i],choices=metaData@sidebar_choices_short[[i]],
+                                                               selected=metaData@sidebar_choices_short[[i]]$all)
+                                              
+                                            }
+                                            do.call(f, arguments)
+                                            
+                                            
+                                          })),
+                                          
+                                          
+                                          
+                                          # Center
+                                          mainPanel(lapply(1:length(tab_inout),function(k){
+                                            if(tab_inout[k]=="selectInput"){
+                                              print(settings$choices[k])
+                                              selectInput(settings$label[k],
+                                                          h5(settings$title[k]),
+                                                          choices = settings$choices[[l]],
+                                                          selected = settings$selected[k])}
+                                            else if(tab_inout[k]=="leafletOutput"){
+                                              do.call(leafletOutput, list(outputId=settings$label[k]))
+                                            }
+                                            else if(tab_inout[k]=="plotlyOutput"){
+                                              plotlyOutput(settings$label[k])
+                                              
+                                            }else if(tab_inout[k]=="download"){
+                                              div(id = "SaveLoad",downloadButton(settings$label[k], settings$title[k]))
+                                            }
+                                          })
+                                            
+                                          )
+                                          
+                                        ))
+                                        
+                                      } else{
+                                        lapply(1:length(tab_inout), function(k){
+                                      
+                                      if(tab_inout[k]=="selectInput"){
+                                        print(settings$choices[k])
+                                        selectInput(settings$label[k],
+                                                    h5(settings$title[k]),
+                                                    choices = settings$choices[[l]],
+                                                    selected = settings$selected[k])}
+                                      else if(tab_inout[k]=="leafletOutput"){
+                                        do.call(leafletOutput, list(outputId=settings$label[k]))
+                                      }
+                                      else if(tab_inout[k]=="sliderInput"){
+                                        sliderSettings = settings$sliderSettings
+                                        sliderSettings[["inputId"]] = settings$label[k]
+                                        sliderSettings[["label"]] = settings$title[k]
+                                        do.call(sliderInput, sliderSettings)
+                                      }
+                                      else if(tab_inout[k]=="plotlyOutput"){
+                                        plotlyOutput(settings$label[k])
+                                        
+                                      } else if(tab_inout[k]=="download"){
+                                        div(id = "SaveLoad",downloadButton(settings$label[k], settings$title[k]))
+                                      } else if(tab_inout[k]=="markdown"){
+                                        includeMarkdown(paste0("./static_data/", settings$markdownFile))
+                                        
+                                      } else if(tab_inout[k]=="image"){
+                                        imageOutput(settings$label[k])
+                                      }})}
+                                      
+                                      
+                                    }))
+                         })))
+)
 
 server <- function(input, output, session) {
    cost_data <- new("costData")
@@ -138,35 +160,48 @@ server <- function(input, output, session) {
    cost <- cost_data@data
    copdNumber <- read_rds("./data/copdNumber.rds")
    buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
-   dataList <- list("Cost"=cost, "copdNumber"=copdNumber)
+   dataList <- list("CostDensity"=cost,"Cost"=cost, "copdNumber"=copdNumber)
    canMap <- new("canadaMap", filename=mapSettings$filename, initialize=FALSE)
+   group_prev <<- "new"
    observe({
-     inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
-     #print("Check")
-     for(i in 1:num_inputs){
-       #print("Check")
-       #print(input$radioAgeGroup)
-       #print(input[['radioGender']])
-        # print(input$selectedTab)
-        # print(i)
-   
-     if (input$selectedTab=="Map") {
-       updateRadioButtons(session, "radioGender", selected = "All")
-       updateRadioButtons(session, "radioAgeGroup", selected = "All")
-       updateRadioButtons(session, "radioProvinces", selected = "All")
-       shinyjs::disable("radioGender")
-       shinyjs::disable("radioAgeGroup")
-       shinyjs::disable("radioProvinces")
-       shinyjs::hide (id = ids[i], anim = TRUE)
+     if(input$selectedTab=="Map"&& !is.null(input$map_groups)){
+       
+       group = input$map_groups
+       print(group)
+       print(input$map_groups_baselayerchange)
+       group = group[-which(group=="basemap")]
+       print(length(group))
+       if(length(group)==1){
+         group_prev <<- group
+         print(group_prev)
+       }else{
+         group = c(setdiff(group_prev, group), setdiff(group, group_prev))
+         group_prev <<- group
+       }
+       g = which(mapSettings$groups!=group)
 
-     } else {
-       shinyjs::enable("radioGender")
-       shinyjs::enable("radioAgeGroup")
-       shinyjs::enable("radioProvinces")
-       if (inputRadio[i] == "Select") {shinyjs::show (id = ids[i], anim = TRUE)}
-       else {shinyjs::hide (id = ids[i], anim = TRUE)}
-      }
-       }})
+       proxy = leafletProxy("map")
+       proxy %>% hideGroup(mapSettings$groups[g])
+     }
+     
+     if(input$selectedTab %in% c("Number of Cases","Cost")){
+       print(input$selectedTab)
+       z = which(c("Number of Cases","Cost")==input$selectedTab)+1
+       print(z)
+       inputRadio <- c(input[[paste0("radioGender",z)]], input[[paste0("radioAgeGroup",z)]],
+                       input[[paste0("radioProvinces",z)]])
+     for(i in 1:num_inputs){
+ 
+         print("Printing input radio")
+         print(inputRadio)
+       if(inputRadio[i]=="Select"){
+       
+       shinyjs::show (id = paste0(ids[i],z), anim = TRUE)
+       }
+       else {shinyjs::hide (id = paste0(ids[i],z), anim = TRUE)
+       }
+
+     }}})
 
   lapply(1:metaData@tabs, function(i){
     settings = metaData@tab_settings[[i]]
@@ -175,8 +210,9 @@ server <- function(input, output, session) {
       l=1
       if(tab_inout[k]=="plotlyOutput"){
         output[[settings$label[k]]]<- renderPlotly({
-          inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
+          #inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
           p <- reactive({do.call(settings$functions[l], args=list())})
+          
           p()
         })
       } else if(tab_inout[k]=="download"){
@@ -186,7 +222,7 @@ server <- function(input, output, session) {
           content = function(file) {
             ggsave(file, device="png", width=11, height=8.5)})
       } else if(tab_inout[k]=="image"){
-        #print(settings$imFile)
+        print(settings$imFile)
         output[[settings$label[k]]] <- renderImage({
           width  <- session$clientData$output_logos_width
           height <- session$clientData$output_logos_height
@@ -201,9 +237,11 @@ server <- function(input, output, session) {
           p <- reactive({do.call(settings$functions[l], args=list())})
           mapDataList <- p()
           map <- new("createMap", layers=mapSettings$layers,
-                     groups = mapSettings$groups, mapDataList=mapDataList)
+                     groups = mapSettings$groups, legendLabels=mapSettings$legendLabels,
+                     mapDataList=mapDataList)
           map <- drawMap(map)
           map
+          #map <- map %>% clearControls()
         })
       }
           }
@@ -211,31 +249,30 @@ server <- function(input, output, session) {
       })
   
   cost_plot <- function(){
-    
-    #print("line")
-    if (input$radioGender == "All") {
+
+    if (input$radioGender3 == "All") {
       genderCheck <- "all genders"
     } else {
-      genderCheck <- input$Gender
+      genderCheck <- input$Gender3
     }
 
 
-    if (input$radioAgeGroup == "All") {
+    if (input$radioAgeGroup3 == "All") {
       ageGroupCheck <- "all ages"
     } else {
-      ageGroupCheck <- input$AgeGroup
+      ageGroupCheck <- input$AgeGroup3
     }
 
-    if (input$radioProvinces == "All") {
+    if (input$radioProvinces3 == "All") {
       provinceCheck <- "Canada"
     } else {
-      provinceCheck <- input$Provinces
+      provinceCheck <- input$Provinces3
     }
-    #print(input$radioProvinces)
+    print(input$radioProvinces3)
    cost$Legend <- interaction(cost$province, cost$gender, cost$age, sep=" ")
    p <- ggplot(subset (cost, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck) & (type %in% input$costType))), aes(x = Year, y=value/1000000, fill = Legend)) +
         geom_bar(stat = "identity", position = "dodge")  + labs(x="Year", y="") + scale_y_continuous(label=scales::dollar_format(suffix = "M")) + theme_bw()
-   #print(class(p))
+   print(class(p))
    ggplotly (p) %>% config(displaylogo=F, doubleClick=F,  displayModeBar=F,
                            modeBarButtonsToRemove=buttonremove) %>%
      layout(xaxis=list(fixedrange=TRUE)) %>% layout(yaxis=list(fixedrange=TRUE))
@@ -243,22 +280,22 @@ server <- function(input, output, session) {
   }
 
   n_copd_plot <- function(){
-    if (input$radioGender == "All") {
+    if (input$radioGender2 == "All") {
       genderCheck <- "all genders"
     } else {
-      genderCheck <- input$Gender
+      genderCheck <- input$Gender2
     }
 
-    if (input$radioAgeGroup == "All") {
+    if (input$radioAgeGroup2 == "All") {
       ageGroupCheck <- "all ages"
     } else {
-      ageGroupCheck <- input$AgeGroup
+      ageGroupCheck <- input$AgeGroup2
     }
 
-    if (input$radioProvinces == "All") {
+    if (input$radioProvinces2 == "All") {
       provinceCheck <- "Canada"
     } else {
-      provinceCheck <- input$Provinces
+      provinceCheck <- input$Provinces2
     }
     copdNumber$Legend <- interaction(copdNumber$province, copdNumber$gender, copdNumber$age, sep=" ")
     p <- ggplot(subset (copdNumber, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (province %in% provinceCheck))), aes(x = Year, y=value, color = Legend)) +
@@ -270,27 +307,21 @@ server <- function(input, output, session) {
   }
 
   getMapData <- function(){
-    if (input$radioGender == "All") {
-      genderCheck <- "all genders"
-    } else {
-      genderCheck <- input$Gender
-    }
 
-    if (input$radioAgeGroup == "All") {
-      ageGroupCheck <- "all ages"
-    } else {
-      ageGroupCheck <- input$AgeGroup
-    }
+    genderCheck <- "all genders"
+    ageGroupCheck <- "all ages"
     yearCheck <- input$sliderYear
-
+    
     mapDataList <- mapSettings$mapDataList
     for(i in 1:mapSettings$layers){
       data <- dataList[[i]]
+      
       mapData <- new("mapData", canMap=canMap,digits=mapSettings$digits[i],
                       group=mapSettings$groups[i],
                      plotLabel=mapSettings$plotLabels[i], palette=mapSettings$palette[i])
       costAll  <- subset(data, ((gender %in% genderCheck) & (age %in% ageGroupCheck) &(province!="Canada")))
       costYear  <- subset(data, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (Year %in% yearCheck)))
+      
       if("type" %in% colnames(data)){
         mapData@costAll <- subset(costAll, ((type %in% input$costTypeMap)))
         mapData@costYear <- subset(costYear, ((type %in% input$costTypeMap)))
@@ -298,9 +329,10 @@ server <- function(input, output, session) {
         mapData@costAll <- costAll
         mapData@costYear <- costYear
       }
-      mapData <- getCostDensity(mapData)
+      
+      mapData <- getCostDensity(mapData, mapSettings$dense[i])
+      
       mapDataList[[i]] <- mapData
-
     }
     return(mapDataList)
     }
