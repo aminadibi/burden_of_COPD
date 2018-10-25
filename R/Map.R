@@ -185,7 +185,7 @@ setMethod(f="drawMap",
           definition=function(object){
 
 
-              m <- leaflet() %>% setView(lng = -100, lat = 60, zoom = 3)%>%
+              m <- leaflet(options=leafletOptions(zoomControl=FALSE)) %>% setView(lng = -100, lat = 60, zoom = 3)%>%
                 addTiles(group="basemap")
                 for(i in 1:object@layers){
                   mapLayer <- object@mapDataList[[i]]
@@ -197,8 +197,12 @@ setMethod(f="drawMap",
                   pop <- getCost(mapLayer@costYear, mapLayer@prov_red)
                   prov2 <- provinceConvert(mapLayer@prov_red, to="long")
                   mapLayer@regions$provinces <- prov2
-                  cost_labels <- round(pop$pop, digits=mapLayer@digits)
-                  cost_labels <- formatC(cost_labels, big.mark=" ", digits=10)
+                  #cost_labels <- round(pop$pop, digits=mapLayer@digits)
+                  cost_labels <- round(mapLayer@regions$Pop, digits = mapLayer@digits)
+                  if(max(cost_labels)>1000000){
+                    cost_labels <- costToMill(cost_labels)
+                  }
+                  #cost_labels <- formatC(cost_labels, big.mark=" ", digits=10)
                   mapLayer@regions$labels <- cost_labels
                   nodata <- which(mapLayer@regions$Pop==0)
                   mapLayer@regions$Pop[nodata] = NA
@@ -213,10 +217,10 @@ setMethod(f="drawMap",
                               bringToFront = TRUE, sendToBack = TRUE),
                             popup = paste(mapLayer@regions$provinces, "<br>",
                                           mapLayer@plotLabel, mapLayer@regions$labels, "<br>")) %>%
-                #clearControls() %>%
                 addLegend("bottomleft", pal = pal, values=c(mapLayer@min_pop, mapLayer@max_pop),
                           title = object@groups[i], group=object@groups[i],
-                          opacity = 1, na.label="No Data",
+                          opacity = 1, na.label="No Data", labFormat = myLabFormat(prefix="$",
+                                                                                     digits=mapLayer@digits),
                           layerId=layerId2)
     
                 }

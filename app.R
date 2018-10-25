@@ -55,6 +55,7 @@ ui <- fluidPage(
   tags$style(type="text/css",
              "body {font-family: 'Source Sans Pro'}"
   ),
+  
 
    # Application title
    titlePanel(metaData@app_title),
@@ -100,11 +101,13 @@ ui <- fluidPage(
                                           mainPanel(lapply(1:length(tab_inout),function(k){
                                             if(tab_inout[k]=="selectInput"){
                                               print(settings$choices[k])
+                                              
                                               selectInput(settings$label[k],
                                                           h5(settings$title[k]),
                                                           choices = settings$choices[[l]],
                                                           selected = settings$selected[k])}
                                             else if(tab_inout[k]=="leafletOutput"){
+                                              tags$head(tags$style('.selectize-dropdown {z-index: 1000000}'))
                                               do.call(leafletOutput, list(outputId=settings$label[k]))
                                             }
                                             else if(tab_inout[k]=="plotlyOutput"){
@@ -124,11 +127,13 @@ ui <- fluidPage(
                                       
                                       if(tab_inout[k]=="selectInput"){
                                         print(settings$choices[k])
-                                        selectInput(settings$label[k],
+                                        selectizeInput(settings$label[k],
                                                     h5(settings$title[k]),
+                                                    options = list(style="z-index:100;"),
                                                     choices = settings$choices[[l]],
                                                     selected = settings$selected[k])}
                                       else if(tab_inout[k]=="leafletOutput"){
+
                                         do.call(leafletOutput, list(outputId=settings$label[k]))
                                       }
                                       else if(tab_inout[k]=="sliderInput"){
@@ -240,6 +245,9 @@ server <- function(input, output, session) {
                      groups = mapSettings$groups, legendLabels=mapSettings$legendLabels,
                      mapDataList=mapDataList)
           map <- drawMap(map)
+          map <- map %>% htmlwidgets::onRender("function(el, x) {
+        L.control.zoom({ position: 'topright' }).addTo(this)
+    }") 
           map
           #map <- map %>% clearControls()
         })
