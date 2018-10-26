@@ -9,6 +9,7 @@
 
 library(shiny)
 library(shinythemes)
+library(shinydashboard)
 #library(shinyjs)
 library(ggplot2)
 library(plotly)
@@ -44,7 +45,7 @@ initialize = TRUE
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-  theme = shinytheme("simplex"),
+  theme = shinytheme("cerulean"),
   shinyjs::useShinyjs(),
   
   # Use the Google webfont "Source Sans Pro"
@@ -59,7 +60,8 @@ ui <- fluidPage(
 
    # Application title
    titlePanel(metaData@app_title),
-   do.call(tabsetPanel, c(id="selectedTab",type="tabs",
+   #do.call(tabsetPanel, c(id="selectedTab",type="tabs",
+  do.call(navbarPage, c(title="Menu",id="selectedTab",
                          
                          lapply(1:metaData@tabs, function(i){
                            z = i
@@ -101,17 +103,19 @@ ui <- fluidPage(
                                           mainPanel(lapply(1:length(tab_inout),function(k){
                                             if(tab_inout[k]=="selectInput"){
                                               print(settings$choices[k])
-                                              
-                                              selectInput(settings$label[k],
-                                                          h5(settings$title[k]),
+                                              box(selectInput(inputId=settings$label[k],
+                                                          #h5(settings$title[k]),
+                                                          label="",
                                                           choices = settings$choices[[l]],
-                                                          selected = settings$selected[k])}
+                                                          selected = settings$selected[k]))
+                                              }
                                             else if(tab_inout[k]=="leafletOutput"){
                                               tags$head(tags$style('.selectize-dropdown {z-index: 1000000}'))
-                                              do.call(leafletOutput, list(outputId=settings$label[k]))
+                                              do.call(leafletOutput, list(outputId=settings$label[k],
+                                                                          width="50%"))
                                             }
                                             else if(tab_inout[k]=="plotlyOutput"){
-                                              plotlyOutput(settings$label[k])
+                                              box(plotlyOutput(settings$label[k]))
                                               
                                             }else if(tab_inout[k]=="download"){
                                               div(id = "SaveLoad",downloadButton(settings$label[k], settings$title[k]))
@@ -127,14 +131,16 @@ ui <- fluidPage(
                                       
                                       if(tab_inout[k]=="selectInput"){
                                         print(settings$choices[k])
-                                        selectizeInput(settings$label[k],
-                                                    h5(settings$title[k]),
+                                        selectizeInput(inputId=settings$label[k],
+                                                    #h5(settings$title[k]),
+                                                    label="",
                                                     options = list(style="z-index:100;"),
                                                     choices = settings$choices[[l]],
                                                     selected = settings$selected[k])}
                                       else if(tab_inout[k]=="leafletOutput"){
 
-                                        do.call(leafletOutput, list(outputId=settings$label[k]))
+                                        do.call(leafletOutput, list(outputId=settings$label[k],
+                                                                    width="50%"))
                                       }
                                       else if(tab_inout[k]=="sliderInput"){
                                         sliderSettings = settings$sliderSettings

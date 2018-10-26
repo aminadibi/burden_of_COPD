@@ -185,7 +185,8 @@ setMethod(f="drawMap",
           definition=function(object){
 
 
-              m <- leaflet(options=leafletOptions(zoomControl=FALSE)) %>% setView(lng = -100, lat = 60, zoom = 3)%>%
+              m <- leaflet(options=leafletOptions(zoomControl=FALSE),
+                           width="50%") %>% setView(lng = -100, lat = 60, zoom = 3)%>%
                 addTiles(group="basemap")
                 for(i in 1:object@layers){
                   mapLayer <- object@mapDataList[[i]]
