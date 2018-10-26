@@ -23,6 +23,7 @@ setClass(
     group="character",
     plotLabel = "character",
     digits = "numeric",
+    prefix = "character",
     legendLabels = "character"
 
   ),
@@ -185,7 +186,8 @@ setMethod(f="drawMap",
           definition=function(object){
 
 
-              m <- leaflet(options=leafletOptions(zoomControl=FALSE)) %>% setView(lng = -100, lat = 60, zoom = 3)%>%
+              m <- leaflet(options=leafletOptions(zoomControl=FALSE),
+                           width="50%") %>% setView(lng = -100, lat = 60, zoom = 3)%>%
                 addTiles(group="basemap")
                 for(i in 1:object@layers){
                   mapLayer <- object@mapDataList[[i]]
@@ -219,9 +221,10 @@ setMethod(f="drawMap",
                                           mapLayer@plotLabel, mapLayer@regions$labels, "<br>")) %>%
                 addLegend("bottomleft", pal = pal, values=c(mapLayer@min_pop, mapLayer@max_pop),
                           title = object@groups[i], group=object@groups[i],
-                          opacity = 1, na.label="No Data", labFormat = myLabFormat(prefix="$",
+                          opacity = 1, na.label="No Data", labFormat = myLabFormat(prefix=mapLayer@prefix,
                                                                                      digits=mapLayer@digits),
                           layerId=layerId2)
+          
     
                 }
                 m <- m %>% addLayersControl(overlayGroups = c(object@groups),
@@ -251,7 +254,7 @@ function(el,x){
 
 setMethod(f="initialize", signature="mapData",
           definition=function(.Object,canMap,
-                              digits, group, plotLabel,
+                              digits, prefix, group, plotLabel,
                               palette){
 
             .Object@regions <- canMap@regions
@@ -260,6 +263,7 @@ setMethod(f="initialize", signature="mapData",
             .Object@group <- group
             .Object@digits <- digits
             .Object@plotLabel <- plotLabel
+            .Object@prefix <- prefix
             .Object <- setPalette(.Object, palette)
             return(.Object) }
           )
