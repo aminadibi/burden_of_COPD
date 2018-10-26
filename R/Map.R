@@ -23,6 +23,7 @@ setClass(
     group="character",
     plotLabel = "character",
     digits = "numeric",
+    prefix = "character",
     legendLabels = "character"
 
   ),
@@ -220,9 +221,10 @@ setMethod(f="drawMap",
                                           mapLayer@plotLabel, mapLayer@regions$labels, "<br>")) %>%
                 addLegend("bottomleft", pal = pal, values=c(mapLayer@min_pop, mapLayer@max_pop),
                           title = object@groups[i], group=object@groups[i],
-                          opacity = 1, na.label="No Data", labFormat = myLabFormat(prefix="$",
+                          opacity = 1, na.label="No Data", labFormat = myLabFormat(prefix=mapLayer@prefix,
                                                                                      digits=mapLayer@digits),
                           layerId=layerId2)
+          
     
                 }
                 m <- m %>% addLayersControl(overlayGroups = c(object@groups),
@@ -252,7 +254,7 @@ function(el,x){
 
 setMethod(f="initialize", signature="mapData",
           definition=function(.Object,canMap,
-                              digits, group, plotLabel,
+                              digits, prefix, group, plotLabel,
                               palette){
 
             .Object@regions <- canMap@regions
@@ -261,6 +263,7 @@ setMethod(f="initialize", signature="mapData",
             .Object@group <- group
             .Object@digits <- digits
             .Object@plotLabel <- plotLabel
+            .Object@prefix <- prefix
             .Object <- setPalette(.Object, palette)
             return(.Object) }
           )
