@@ -52,7 +52,6 @@ initialize = TRUE
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(skin="blue",
-  
   # header
   dashboardHeader(title=metaData@app_title, titleWidth=320),
   # sidebar
@@ -219,8 +218,7 @@ ui <- dashboardPage(skin="blue",
              tabItem(tabName="termsTab",
                       includeMarkdown(paste0("./static_data/", metaData@tab_settings[[6]]$markdownFile))))))
                       
-                        
-
+                       
 
 server <- function(input, output, session) {
 
