@@ -24,22 +24,29 @@ choices_cost <- list("Total" = "sum",
                      "Outpatient" = "MSP",
                      "Pharma" = "pharm")
 
-tab1 <- c("plotlyOutput", "download")
-tab4 <- c("selectInput", "leafletOutput", "sliderInput")
-tab3 <- c("selectInput", "plotlyOutput", "download")
-tab2 <- c("leafletOutput", "sliderInput")
+tab3 <- c("plotlyOutput", "download")
+tab2 <- c("selectInput","infoBox","infoBox","infoBox","infoBox", "leafletOutput", "sliderInput")
+tab1 <- c("selectInput", "plotlyOutput", "download")
+tab4 <- c("infoBox","infoBox","infoBox","infoBox","leafletOutput", "sliderInput")
 tab6 <- c("markdown")
 tab5 <- c("markdown", "image")
-tab4input <- c("costTypeMap", "sliderYear")
-tab2input <- c()
-tab1input <- c("plot_n_COPD")
-tab3input <- c()
+tab2input <- c("costTypeMap", "sliderYear")
+tab4input <- c()
+tab3input <- c("plot_n_COPD")
+tab1input <- c()
 tab5input <- c()
 tab6input <- c()
-tab4id <- list("label" = c("costTypeMap", "map", "sliderYear"),
-               "title" = c("Cost Map", "", "Year"),
+tab2id <- list("label" = c("costTypeMap","box1","box2", "box3","box4", "map", "sliderYear"),
+               "title" = c("Cost Map", "","","","","", "Year"),
+               "treatmentTypeTitles" = c("Inpatient", "Outpatient", "Medication", 
+                                         "Total Cost for "),
+               "treatmentType" = c("hosp", "MSP", "pharm", "sum"),
                "choices" = list(choices_cost),
                "selected" = c("sum"),
+               "numberOfBoxes" = 4,
+               "boxLabel"="box",
+               "boxPrefix"="$",
+               "boxSuffix"=c(" per Capita", ""),
                "sliderSettings" = list("min"=2015,
                                        "max"=2030,
                                        "value"=2015,
@@ -50,20 +57,27 @@ tab4id <- list("label" = c("costTypeMap", "map", "sliderYear"),
                                        "animate" = animationOptions(interval = 300,
                                                                     loop = FALSE)),
                "functions"=c("getMapData"))
-tab1id <- list("label" = c("plot_n_COPD", "download_plot_n"),
+tab3id <- list("label" = c("plot_n_COPD", "download_plot_n"),
                "title" = c("", "Download Plot"),
                "png_name"="COPD_Projected_Prevalence_",
                "functions"=c("n_copd_plot"))
-tab3id <- list("label" = c("costType", "plot_cost", "download_plot_cost", "map"),
+tab1id <- list("label" = c("costType", "plot_cost", "download_plot_cost", "map"),
                "title" = c("Cost Type", "", "Download Plot"),
                "choices" = list(choices_cost),
                "selected" = c("sum"),
                "png_name"="COPD_Projected_cost_",
                "functions"=c("cost_plot"))
-tab2id <- list("label" = c("map2", "sliderYear2"),
-               "title" = c("Case Map", "", "Year"),
+tab4id <- list("label" = c("box01","box02", "box03","box04","map2", "sliderYear2"),
+               "title" = c("","","","", "Case Map", "", "Year"),
                "choices" = list(choices_cost),
+               "numberOfBoxes"=4,
+               "treatmentType" = c("hosp", "MSP", "pharm", "sum"),
+               "treatmentTypeTitles" = c("Inpatient", "Outpatient", "Medication", 
+                                         "Total Cases in "),
                "selected" = c("sum"),
+               "boxLabel" = "box0",
+               "boxPrefix"="",
+               "boxSuffix" = c(" per Capita"),
                "sliderSettings" = list("min"=2015,
                                        "max"=2030,
                                        "value"=2015,
@@ -80,7 +94,7 @@ tab5id <- list("markdownFile"="about.Rmd","imFile"="logos2.png", "label"=c("","l
 metaData = new("MetaData")
 metaData@app_title = "Burden of COPD in Canada"
 metaData@tabs = 6
-metaData@tab_titles <- c("Map", "Number of Cases", "Cost", "About", "Terms")
+metaData@tab_titles <- c("Cost", "Prevalence", "About", "Terms")
 metaData@sidebar = 3
 metaData@sidebar_titles = c("Gender", "Age Group","Province") 
 metaData@sidebar_labels = c("Gender", "AgeGroup","Provinces") 
