@@ -75,81 +75,14 @@ ui <- dashboardPage(skin="blue",
     tabItems(
     
     # tab1
-    tabItem(tabName="casesSubTabGraph",
+    tabItem(tabName="costSubTabGraph",
               
               # TabBox --> Box
-              box(title="COPD Cases by Graph",width=12,status="info",solidHeader=TRUE,
+              box(width=12,status="info",
                   # AppBrick --> SideBarLayout
                   sidebarLayout(
                         
                     sidebarPanel(
-                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[1],"2"), 
-                                       label=metaData@sidebar_titles[1],
-                                       choices=metaData@sidebar_choices_short[[1]],
-                                       selected=metaData@sidebar_choices_short[[1]]$all),
-                          shinyjs::hidden(div(id=paste0(ids[1],"2"),
-                                          checkboxGroupInput(paste0(metaData@sidebar_labels[1], "2"),
-                                                             label = NA,
-                                                             choices = metaData@sidebar_choices_long[[1]],
-                                                             selected = metaData@sidebar_choices_long[[1]]$all))),
-                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[2],"2"), 
-                                       label=metaData@sidebar_titles[2],
-                                       choices=metaData@sidebar_choices_short[[2]],
-                                       selected=metaData@sidebar_choices_short[[2]]$all),
-                          shinyjs::hidden(div(id=paste0(ids[2],"2"),
-                                          checkboxGroupInput(paste0(metaData@sidebar_labels[2], "2"),
-                                                             label = NA,
-                                                             choices = metaData@sidebar_choices_long[[2]],
-                                                             selected = metaData@sidebar_choices_long[[2]]$all))),
-                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[3],"2"), 
-                                       label=metaData@sidebar_titles[3],
-                                       choices=metaData@sidebar_choices_short[[3]],
-                                       selected=metaData@sidebar_choices_short[[3]]$all),
-                          shinyjs::hidden(div(id=paste0(ids[3],"2"),
-                                          checkboxGroupInput(paste0(metaData@sidebar_labels[3], "2"),
-                                                             label = NA,
-                                                             choices = metaData@sidebar_choices_long[[3]],
-                                                             selected = metaData@sidebar_choices_long[[3]]$all)))
-                          
-                        ),
-                        mainPanel(plotlyOutput(metaData@tab_settings[[1]]$label[1]),
-                               
-                                  div(id = "SaveLoad",downloadButton(metaData@tab_settings[[1]]$label[2], 
-                                                                     metaData@tab_settings[[1]]$title[2]))))
-                      )),
-            # tab2
-            tabItem(tabName="casesSubTabMap",
-                    # TabBox --> Box
-                    box(solidHeader=TRUE, 
-                        title="COPD Cases by Map",
-                        status="info",
-                        # TabBox --> ValueBoxOutput
-                        valueBoxOutput("box01"),
-                        valueBoxOutput("box02"),
-                        valueBoxOutput("box03"),
-                        valueBoxOutput("box04", width=12),
-                        # AppBrick --> MapBrick
-                        leafletOutput(outputId="map2",
-                                                    width="100%"), 
-                        # AppBrick --> SliderInput
-                        sliderInput(inputId="sliderYear2",label="Year", 
-                                    width="100%",
-                                    min=2015,
-                                    max=2030,
-                                    value=2015,
-                                    step=5,
-                                    round=FALSE,
-                                    ticks=TRUE,
-                                    sep="",
-                                    animate = animationOptions(interval = 300,
-                                                               loop = FALSE)),
-                        width=12, height=6)),
-            # Tab
-             tabItem(tabName="costSubTabGraph",
-                     # TabBox --> Box
-                     box(title="COPD Cost by Graph",width=12,status="info",solidHeader=TRUE,
-                      sidebarLayout(
-                        sidebarPanel(
                           radioButtons(inputId=paste0("radio", metaData@sidebar_labels[1],"3"), 
                                        label=metaData@sidebar_titles[1],
                                        choices=metaData@sidebar_choices_short[[1]],
@@ -179,14 +112,83 @@ ui <- dashboardPage(skin="blue",
                                                              selected = metaData@sidebar_choices_long[[3]]$all)))
                           
                         ),
-                        mainPanel(selectizeInput(inputId="costType",
-                                                 label="",
-                                                 options = list(style="z-index:100;"),
-                                                 choices = choices_cost,
-                                                 selected = c("sum")),
-                          plotlyOutput(metaData@tab_settings[[3]]$label[2]),
-                                  div(id = "SaveLoad",downloadButton(metaData@tab_settings[[3]]$label[3], 
-                                                                     metaData@tab_settings[[3]]$title[3])))
+                        mainPanel(
+                          selectizeInput(inputId="costType",
+                                         label="",
+                                         options = list(style="z-index:100;"),
+                                         choices = choices_cost,
+                                         selected = c("sum")),
+                          plotlyOutput(metaData@tab_settings[[1]]$label[2]),
+                               
+                                  div(id = "SaveLoad",downloadButton(metaData@tab_settings[[1]]$label[3], 
+                                                                     metaData@tab_settings[[1]]$title[3]))))
+                      )),
+            # tab2
+            tabItem(tabName="casesSubTabMap",
+                    # TabBox --> Box
+                    box(solidHeader=TRUE, 
+                        title="COPD Cases by Map",
+                        status="info",
+                        # TabBox --> ValueBoxOutput
+                        valueBoxOutput("box01"),
+                        valueBoxOutput("box02"),
+                        valueBoxOutput("box03"),
+                        valueBoxOutput("box04", width=12),
+                        # AppBrick --> MapBrick
+                        leafletOutput(outputId="map2",
+                                                    width="100%"), 
+                        # AppBrick --> SliderInput
+                        sliderInput(inputId="sliderYear2",label="Year", 
+                                    width="100%",
+                                    min=2015,
+                                    max=2030,
+                                    value=2015,
+                                    step=5,
+                                    round=FALSE,
+                                    ticks=TRUE,
+                                    sep="",
+                                    animate = animationOptions(interval = 300,
+                                                               loop = FALSE)),
+                        width=12, height=6)),
+            # Tab
+             tabItem(tabName="casesSubTabGraph",
+                     # TabBox --> Box
+                     box(width=12,status="info",
+                      sidebarLayout(
+                        sidebarPanel(
+                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[1],"2"), 
+                                       label=metaData@sidebar_titles[1],
+                                       choices=metaData@sidebar_choices_short[[1]],
+                                       selected=metaData@sidebar_choices_short[[1]]$all),
+                          shinyjs::hidden(div(id=paste0(ids[1],"2"),
+                                          checkboxGroupInput(paste0(metaData@sidebar_labels[1], "2"),
+                                                             label = NA,
+                                                             choices = metaData@sidebar_choices_long[[1]],
+                                                             selected = metaData@sidebar_choices_long[[1]]$all))),
+                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[2],"2"), 
+                                       label=metaData@sidebar_titles[2],
+                                       choices=metaData@sidebar_choices_short[[2]],
+                                       selected=metaData@sidebar_choices_short[[2]]$all),
+                          shinyjs::hidden(div(id=paste0(ids[2],"2"),
+                                          checkboxGroupInput(paste0(metaData@sidebar_labels[2], "2"),
+                                                             label = NA,
+                                                             choices = metaData@sidebar_choices_long[[2]],
+                                                             selected = metaData@sidebar_choices_long[[2]]$all))),
+                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[3],"2"), 
+                                       label=metaData@sidebar_titles[3],
+                                       choices=metaData@sidebar_choices_short[[3]],
+                                       selected=metaData@sidebar_choices_short[[3]]$all),
+                          shinyjs::hidden(div(id=paste0(ids[3],"2"),
+                                          checkboxGroupInput(paste0(metaData@sidebar_labels[3], "2"),
+                                                             label = NA,
+                                                             choices = metaData@sidebar_choices_long[[3]],
+                                                             selected = metaData@sidebar_choices_long[[3]]$all)))
+                          
+                        ),
+                        mainPanel(
+                          plotlyOutput(metaData@tab_settings[[3]]$label[1]),
+                                  div(id = "SaveLoad",downloadButton(metaData@tab_settings[[3]]$label[2], 
+                                                                     metaData@tab_settings[[3]]$title[2])))
                       ))),
           tabItem(tabName="costSubTabMap",
                   # TabBox --> ValueBoxOutput
@@ -290,13 +292,17 @@ server <- function(input, output, session) {
       l=1
       if(tab_inout[k]=="plotlyOutput"){
         cat("~~~ Plotly Graph ~~~", fill=T)
+        cat(settings$functions[l], fill=T)
+        cat(settings$label[[k]], fill=T)
         output[[settings$label[k]]]<- renderPlotly({
-          
+          cat("~~~ Making Graph ~~~", fill=T)
           p <- reactive({do.call(settings$functions[l], args=list())})
           
           p()
         })
       } else if(tab_inout[k]=="download"){
+        cat("~~~ Download ~~~", fill=T)
+        cat(settings$label[[k]], fill=T)
         output[[settings$label[k]]] <- downloadHandler(
           filename = function(){
             paste(settings$png_name, Sys.Date(), ".png", sep="")},
@@ -392,6 +398,7 @@ server <- function(input, output, session) {
   
   cost_plot <- function(){
     
+    cat("~~~ Making Cost Plot ~~~", fill=T)
     if (input$radioGender3 == "All") {
       genderCheck <- "all genders"
     } else {
