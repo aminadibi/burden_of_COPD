@@ -42,6 +42,8 @@ choices_cost <- list("Total" = "sum",
                      "Outpatient" = "MSP",
                      "Pharma" = "pharm")
 s_tabs = c(2,3)
+colors <- c("olive", "purple", "maroon", "aqua")
+iconBox <- list(icon("user", lib="font-awesome"), icon("usd", lib="font-awesome"))
 tab_titles = metaData@tab_titles
 i=1
 num_inputs <- length(ids)
@@ -50,41 +52,34 @@ initialize = TRUE
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(skin="blue",
-  #theme = shinytheme("cerulean"),
   
-  
-  # Use the Google webfont "Source Sans Pro"
-  # tags$link(
-  #   href=paste0("http://fonts.googleapis.com/css?",
-  #               "family=Source+Sans+Pro:300,600,300italic"),
-  #   rel="stylesheet", type="text/css"),
-  # tags$style(type="text/css",
-  #            "body {font-family: 'Source Sans Pro'}"
-  # ),
-  
-  
-  # Application title
-  #titlePanel(metaData@app_title),
-  #do.call(tabsetPanel, c(id="selectedTab",type="tabs",
+  # header
   dashboardHeader(title=metaData@app_title, titleWidth=320),
+  # sidebar
   dashboardSidebar(
     sidebarMenu(id="selectedTab",
-      menuItem("Number of Cases", tabName = "casesTab", icon = icon("sort numeric up", lib="font-awesome"),
-               menuSubItem("Graph", tabName="casesSubTabGraph",icon=icon("bar-chart", lib="font-awesome")),
-               menuSubItem("Map", tabName="casesSubTabMap",icon=icon("globe americas", lib="font-awesome"))),
       menuItem("Cost", tabName = "costTab", icon = icon("dollar sign", lib="font-awesome"),
                menuSubItem("Graph", tabName="costSubTabGraph", icon=icon("bar-chart", lib="font-awesome")),
                menuSubItem("Map", tabName="costSubTabMap",icon=icon("globe americas", lib="font-awesome"))),
+      menuItem("Prevalence", tabName = "casesTab", icon = icon("sort numeric up", lib="font-awesome"),
+               menuSubItem("Graph", tabName="casesSubTabGraph",icon=icon("bar-chart", lib="font-awesome")),
+               menuSubItem("Map", tabName="casesSubTabMap",icon=icon("globe americas", lib="font-awesome"))),
+
       menuItem("About", tabName = "aboutTab", icon = icon("address-book", lib="font-awesome")),
       menuItem("Terms", tabName = "termsTab", icon = icon("balance-scale", lib="font-awesome"))
     )
   ),
+  # body
   dashboardBody(
     shinyjs::useShinyjs(),
     tabItems(
+    
+    # tab1
     tabItem(tabName="casesSubTabGraph",
-            
+              
+              # TabBox --> Box
               box(title="COPD Cases by Graph",width=12,status="info",solidHeader=TRUE,
+                  # AppBrick --> SideBarLayout
                   sidebarLayout(
                         
                     sidebarPanel(
@@ -122,12 +117,21 @@ ui <- dashboardPage(skin="blue",
                                   div(id = "SaveLoad",downloadButton(metaData@tab_settings[[1]]$label[2], 
                                                                      metaData@tab_settings[[1]]$title[2]))))
                       )),
+            # tab2
             tabItem(tabName="casesSubTabMap",
+                    # TabBox --> Box
                     box(solidHeader=TRUE, 
                         title="COPD Cases by Map",
                         status="info",
+                        # TabBox --> ValueBoxOutput
+                        valueBoxOutput("box01"),
+                        valueBoxOutput("box02"),
+                        valueBoxOutput("box03"),
+                        valueBoxOutput("box04", width=12),
+                        # AppBrick --> MapBrick
                         leafletOutput(outputId="map2",
                                                     width="100%"), 
+                        # AppBrick --> SliderInput
                         sliderInput(inputId="sliderYear2",label="Year", 
                                     width="100%",
                                     min=2015,
@@ -140,7 +144,9 @@ ui <- dashboardPage(skin="blue",
                                     animate = animationOptions(interval = 300,
                                                                loop = FALSE)),
                         width=12, height=6)),
+            # Tab
              tabItem(tabName="costSubTabGraph",
+                     # TabBox --> Box
                      box(title="COPD Cost by Graph",width=12,status="info",solidHeader=TRUE,
                       sidebarLayout(
                         sidebarPanel(
@@ -183,11 +189,16 @@ ui <- dashboardPage(skin="blue",
                                                                      metaData@tab_settings[[3]]$title[3])))
                       ))),
           tabItem(tabName="costSubTabMap",
-            box(solidHeader=TRUE, 
-                title="COPD Cost by Map",
-                status="info",
+                  # TabBox --> ValueBoxOutput
+                  valueBoxOutput("box1"),
+                  valueBoxOutput("box2"),
+                  valueBoxOutput("box3"),
+                  valueBoxOutput("box4", width=12),
+            box(status="info",
+                # AppBrick --> MapBrick
                 leafletOutput(outputId="map",
                               width="100%"),
+                # AppBrick --> SliderInput
                 sliderInput(inputId="sliderYear",label="Year", 
                             width="100%",
                             min=2015,
@@ -199,14 +210,11 @@ ui <- dashboardPage(skin="blue",
                             sep="",
                             animate = animationOptions(interval = 300,
                                                        loop = FALSE)),
-                selectizeInput(inputId="costTypeMap",
-                               label="",width="100%",
-                               options = list(style="z-index:100;"),
-                               choices = choices_cost,
-                               selected = c("sum")),
                 width=12, height=6)),
              tabItem(tabName="aboutTab",
+                     # AppBrick --> IncludeMarkDown
                       includeMarkdown(paste0("./static_data/", metaData@tab_settings[[5]]$markdownFile)),
+                     # AppBrick --> ImageOutput
                       imageOutput(metaData@tab_settings[[5]]$label[2])),
              tabItem(tabName="termsTab",
                       includeMarkdown(paste0("./static_data/", metaData@tab_settings[[6]]$markdownFile))))))
@@ -215,7 +223,7 @@ ui <- dashboardPage(skin="blue",
 
 
 server <- function(input, output, session) {
-  print("Working...")
+
   cost_data <- new("costData")
   cost_data <- readRDS(cost_data, "./data/cost.rds")
   cost <- cost_data@data
@@ -235,7 +243,6 @@ server <- function(input, output, session) {
       } else {mapSettings = mapSettings2}
       group = input$map_groups
       print(group)
-      print("Working")
       print(input$map_groups_baselayerchange)
       group = group[-which(group=="basemap")]
       print(length(group))
@@ -278,11 +285,13 @@ server <- function(input, output, session) {
   lapply(1:metaData@tabs, function(i){
     settings = metaData@tab_settings[[i]]
     tab_inout = metaData@tab_inout[[i]]
+    cat(paste0("Setting up tab components for tab:", i), fill=T)
     lapply(1:length(tab_inout), function(k){
       l=1
       if(tab_inout[k]=="plotlyOutput"){
+        cat("~~~ Plotly Graph ~~~", fill=T)
         output[[settings$label[k]]]<- renderPlotly({
-          #inputRadio <- c(input$radioGender, input$radioAgeGroup, input$radioProvinces)
+          
           p <- reactive({do.call(settings$functions[l], args=list())})
           
           p()
@@ -294,7 +303,6 @@ server <- function(input, output, session) {
           content = function(file) {
             ggsave(file, device="png", width=11, height=8.5)})
       } else if(tab_inout[k]=="image"){
-        print(settings$imFile)
         output[[settings$label[k]]] <- renderImage({
           width  <- session$clientData$output_logos_width
           height <- session$clientData$output_logos_height
@@ -305,26 +313,82 @@ server <- function(input, output, session) {
                alt = "Logos")
         }, deleteFile = FALSE)
       } else if(tab_inout[k]=="leafletOutput"){
-        output[[settings$label[k]]] <- renderLeaflet({
-          if(settings$label[[k]]=="map2"){mapSettings = mapSettings2}else{
-            mapSettings = mapSettings1
-          }
-          p <- reactive({do.call(settings$functions[l], args=list(mapSettings))})
+        cat("~~~ Leaflet Map ~~~", fill=T)
+        cat(settings$functions[l], fill=T)
+        cat(settings$label[[k]])
+        mapId = settings$label[[k]]
+        if(mapId=="map2"){mapSettings = mapSettings2}else{
+          mapSettings = mapSettings1
+        }
+        p <- reactive({do.call(settings$functions[l], args=list(mapSettings))})
+        
+        output[[mapId]] <- renderLeaflet({
+          
           mapDataList <- p()
           map <- new("createMap", layers=mapSettings$layers,
                      groups = mapSettings$groups, legendLabels=mapSettings$legendLabels,
                      mapDataList=mapDataList)
-          map <- drawMap(map)
-          map <- map %>% htmlwidgets::onRender("function(el, x) {
+          map <- setupMap(map)
+          mapRender <- drawMap(map)
+          mapRender <- mapRender %>% htmlwidgets::onRender("function(el, x) {
                                                L.control.zoom({ position: 'topright' }).addTo(this)
         }") 
-          map
-          #map <- map %>% clearControls()
+          mapRender
+          
       })
+        cat("~~~ Setting up Info Boxes ~~~", fill=T)
+        cat(paste0("Number of Boxes = ", settings$numberOfBoxes), fill=T)
+        lapply(1:settings$numberOfBoxes, function(box){
+          boxId <- paste0(settings$boxLabel, box)
+          mapShapeClick <- paste0(mapId, "_shape_click")
+        output[[boxId]] <- renderValueBox({
+          province <- eventReactive(input[[mapShapeClick]], { # update the location selectInput on map clicks
+            input[[mapShapeClick]]$id
+          })
+          
+          mapDataList <- p()
+          map <- new("createMap", layers=mapSettings$layers,
+                     groups = mapSettings$groups, legendLabels=mapSettings$legendLabels,
+                     mapDataList=mapDataList)
+          map <- setupMap(map)
+          cat("Creating map", fill=T)
+          groupid <- province()
+          print(groupid)
+          
+          layer <- as.numeric(substr(groupid, 6,6))
+          print(layer)
+          prov <- as.numeric(substr(groupid,7,9))
+          print(prov)
+          mapLayer <- map@mapDataList[[layer]]
+          print(mapLayer@costYear)
+          
+          print(settings$treatmentType[box])
+          print(settings$treatmentType)
+          typeList <- costType(map, layer, settings$treatmentType[box], TRUE, mapSettings$dense[layer])
+          print(typeList)
+          print(settings$treatmentType[box])
+          if(box==4){
+            subtitle = paste0(settings$treatmentTypeTitles[box], typeList$provinces[prov], 
+                              settings$boxSuffix[layer])
+          } else{
+            subtitle = settings$treatmentTypeTitles[box]
+          }
+
+          valueBox(
+            value = paste0(settings$boxPrefix, typeList$labels[prov]),
+            subtitle = subtitle,
+            color = colors[box],
+            icon = iconBox[[layer]]
+
+          )
+        })})
+      } else if(tab_inout[k]=="infoBox"){
+ 
       }
       }
         )
       })
+
   
   cost_plot <- function(){
     
@@ -389,6 +453,7 @@ server <- function(input, output, session) {
     genderCheck <- "all genders"
     ageGroupCheck <- "all ages"
     yearCheck <- input$sliderYear
+    noType <- TRUE
     
     mapDataList <- mapSettings$mapDataList
     for(i in 1:mapSettings$layers){
@@ -401,8 +466,11 @@ server <- function(input, output, session) {
       costYear  <- subset(data, ((gender %in% genderCheck) & (age %in% ageGroupCheck) & (Year %in% yearCheck)))
       
       if("type" %in% colnames(data)){
-        mapData@costAll <- subset(costAll, ((type %in% input$costTypeMap)))
-        mapData@costYear <- subset(costYear, ((type %in% input$costTypeMap)))
+        mapData@costAll <- subset(costAll, ((type %in% "sum")))
+        mapData@costYear <- subset(costYear, ((type %in% "sum")))
+        mapData@costYearNoType <- costYear
+        mapData@types <- TRUE
+        mapData@typesList <- c("sum", "hosp", "MSP", "pharm")
       } else {
         mapData@costAll <- costAll
         mapData@costYear <- costYear

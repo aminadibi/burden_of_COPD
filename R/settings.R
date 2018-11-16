@@ -26,7 +26,7 @@ mapSettings2 <- list(filename = "./static_data/canadaMap.RData",
                     mapDataList = list("copdNumber"=0),
                     groups = c("Number of COPD"),
                     plotLabels = c("COPD Cases per Year: "),
-                    digits = c(2),
+                    digits = c(0),
                     dense = c(TRUE),
                     legendLabels = c("legend3"),
                     prefix=c("")

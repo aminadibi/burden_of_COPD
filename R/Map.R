@@ -12,6 +12,9 @@ setClass(
     scale_size = "numeric",
     costYear = "data.frame",
     costAll = "data.frame",
+    costYearNoType = "data.frame",
+    types = "logical",
+    typesList = "character",
     min_pop = "numeric",
     max_pop = "numeric",
     regions = "SpatialPolygonsDataFrame",
@@ -136,10 +139,10 @@ setMethod(f="setPalette",signature="mapData",
             cat('~~~ mapData: Setting color palette ~~~\n')
             if(names(palette)=="viridis"){
               pal = viridis_pal(option = palette)(object@scale_size)
+              pal = rev(pal)
             } else if (names(palette)=="brewer"){
               coul = RColorBrewer::brewer.pal(4, palette)
               pal = colorRampPalette(coul)(25)
-              pal = rev(pal)
             }
             object@pal = pal
             cat('mapData: color palette set\n')
@@ -174,6 +177,76 @@ setClass(
     return(TRUE)
   }
 )
+setGeneric(name="costType",
+           def=function(object, layer, treatmentType, types, dense)
+           {
+             standardGeneric("costType")
+           }
+)
+setMethod(f="costType",
+          signature="createMap",
+          definition=function(object, layer, treatmentType, types, dense){
+            mapLayer <- object@mapDataList[[layer]]
+            if(types){
+              mapLayer@costYear  <- subset(mapLayer@costYearNoType, ((type %in% treatmentType)))
+            }
+            newMapLayer <- getCostDensity(mapLayer, dense)
+            mapLayer@regions$Pop <- newMapLayer@costDensity
+            pop <- getCost(mapLayer@costYear, mapLayer@prov_red)
+            prov2 <- provinceConvert(mapLayer@prov_red, to="long")
+            mapLayer@regions$provinces <- prov2
+            cost_labels <- round(mapLayer@regions$Pop, digits = mapLayer@digits)
+            if(max(cost_labels)>1000000){
+              cost_labels <- costToMill(cost_labels)
+            }
+            mapLayer@regions$labels <- cost_labels
+            nodata <- which(mapLayer@regions$Pop==0)
+            mapLayer@regions$Pop[nodata] = NA
+            mapLayer@regions$labels[nodata] = "No Data"
+            typeList <- list("provinces"=prov2, "labels"=cost_labels)
+            return(typeList)
+    
+            
+          })
+setGeneric(name="setupMap",
+           def=function(object)
+           {
+             standardGeneric("setupMap")
+           }
+)
+setMethod(f="setupMap",
+          signature="createMap",
+          definition=function(object){
+            
+            cat("~~~ Setting up Map ~~~", fill=T)
+            for(i in 1:object@layers){
+              mapLayer <- object@mapDataList[[i]]
+              mapLayer@regions$Pop <- mapLayer@costDensity
+              pop <- getCost(mapLayer@costYear, mapLayer@prov_red)
+              prov2 <- provinceConvert(mapLayer@prov_red, to="long")
+              mapLayer@regions$provinces <- prov2
+              cost_labels <- round(mapLayer@regions$Pop, digits = mapLayer@digits)
+              if(max(cost_labels)>1000000){
+                cost_labels <- costToMill(cost_labels)
+              }
+              mapLayer@regions$labels <- cost_labels
+              nodata <- which(mapLayer@regions$Pop==0)
+              mapLayer@regions$Pop[nodata] = NA
+              mapLayer@regions$labels[nodata] = "No Data"
+              layerId = sapply(1:length(prov2), function(x){paste0("group",i,mapLayer@prov_red[x])})
+              layerId2 = object@legendLabels[i]
+
+              object@mapDataList[[i]] <- mapLayer
+              
+              
+            }
+          
+            
+            return(object)
+          }
+)
+
+
 
 setGeneric(name="drawMap",
            def=function(object)
@@ -216,9 +289,7 @@ setMethod(f="drawMap",
                             color="white", weight=0.8, fillColor=~pal(Pop),layerId = layerId,
                             highlightOptions = highlightOptions(
                               color = "white", opacity = 1, weight = 2, fillOpacity = 1,
-                              bringToFront = TRUE, sendToBack = TRUE),
-                            popup = paste(mapLayer@regions$provinces, "<br>",
-                                          mapLayer@plotLabel, mapLayer@regions$labels, "<br>")) %>%
+                              bringToFront = TRUE, sendToBack = TRUE)) %>%
                 addLegend("bottomleft", pal = pal, values=c(mapLayer@min_pop, mapLayer@max_pop),
                           title = object@groups[i], group=object@groups[i],
                           opacity = 1, na.label="No Data", labFormat = myLabFormat(prefix=mapLayer@prefix,
@@ -228,8 +299,9 @@ setMethod(f="drawMap",
     
                 }
                 m <- m %>% addLayersControl(overlayGroups = c(object@groups),
-                                            options = layersControlOptions(collapsed=FALSE)) %>%
-                   hideGroup(object@groups[2:object@layers])%>%
+                                            options = layersControlOptions(collapsed=FALSE)) 
+                if(object@layers>1){m <- m %>% hideGroup(object@groups[2:object@layers])}
+                   
   #                 htmlwidgets::onRender("
   #   function(el, x) {
   #     // Navigate the map to the user's location
@@ -237,7 +309,7 @@ setMethod(f="drawMap",
   #   }
   # ")%>%
                   #map.addLayer(console.log(e.layer));
-                  
+                  m <- m %>%
                  htmlwidgets::onRender("
 function(el,x){
                   this.on('baselayerchange',

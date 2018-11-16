@@ -8,15 +8,15 @@ costToMill <- function(cost_vector, char = TRUE){
       figure <- round(figure,2)
       figure <- formatC(figure, format = 'f', digits = 1)
       if(char){
-        figure <- paste0(as.character(figure), " Billion")
+        figure <- paste0(as.character(figure), "B")
       }
     } else if (cost_vector[i]==0) {
       figure <- "No Data"
     } else{
       figure <- round(figure, 2)
-      figure <- formatC(figure, format = 'f', digits = 1)
+      figure <- formatC(figure, format = 'f', digits = 0)
       if(char){
-        figure <- paste0(as.character(figure), " Million")
+        figure <- paste0(as.character(figure), "M")
       }
     }
     figures <- c(figures, figure)
