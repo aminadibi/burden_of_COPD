@@ -10,7 +10,7 @@ mapSettings0 <- list(filename = "./static_data/canadaMap.RData",
   prefix=c("$", "$", "")
 )
 mapSettings1 <- list(filename = "./static_data/canadaMap.RData",
-                     palette = c("brewer"="YlGnBu", "brewer"="YlGnBu"),
+                     palette = c("custom"="custom", "custom"="custom"),
                      layers = 2,
                      mapDataList = list("CostDensity"=0,"Cost"=0),
                      groups = c("Cost per Capita","Overall Cost"),
@@ -21,7 +21,8 @@ mapSettings1 <- list(filename = "./static_data/canadaMap.RData",
                      prefix=c("$", "$")
 )
 mapSettings2 <- list(filename = "./static_data/canadaMap.RData",
-                    palette = c("brewer"="Greens"),
+                    #palette = c("brewer"="Greens"),
+                    palette = c("custom"="custom"),
                     layers = 1,
                     mapDataList = list("copdNumber"=0),
                     groups = c("Number of COPD"),
