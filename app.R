@@ -229,8 +229,7 @@ ui <- dashboardPage(skin=appLayout$dashboardColour,
              tabItem(tabName="termsTab",
                       includeMarkdown(paste0("./static_data/", metaData@tab_settings[[6]]$markdownFile))))))
                       
-                        
-
+                       
 
 server <- function(input, output, session) {
   
