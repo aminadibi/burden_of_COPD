@@ -144,8 +144,11 @@ setMethod(f="setPalette",signature="mapData",
               coul = RColorBrewer::brewer.pal(4, palette)
               pal = colorRampPalette(coul)(25)
             } else if(names(palette)=="custom"){
-              coul = c("#062F4F", "#813772", "#B82601")
-              pal = colorRampPalette(coul)(25)
+              coul = c("#e0b8d8", 
+                       #"#00A7E1",
+                       "#240f20")
+              #coul = c("#062F4F", "#813772", "#B82601")
+              pal = colorRampPalette(coul)(100)
             }
             object@pal = pal
             cat('mapData: color palette set\n')

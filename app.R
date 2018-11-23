@@ -9,7 +9,7 @@
 
 library(shiny)
 library(shinythemes)
-library(shinydashboard)
+library(shinydashboard2)
 library(devtools)
 library(ggplot2)
 library(plotly)
@@ -46,6 +46,7 @@ choices_cost <- list("Total" = "sum",
 s_tabs = c(2,3)
 colors <- c("olive", "purple", "maroon", "aqua")
 colors <- c("ink", "posy", "embers", "black")
+colors <- c("ink", "steel-blue", "cobalt-blue", "posy")
 iconBox <- list(icon("user", lib="font-awesome"), icon("usd", lib="font-awesome"))
 tab_titles = metaData@tab_titles
 i=1
@@ -78,6 +79,7 @@ ui <- dashboardPage(skin=appLayout$dashboardColour,
   # body
   dashboardBody(
     shinyjs::useShinyjs(),
+    
     tabItems(
     
 
@@ -231,7 +233,8 @@ ui <- dashboardPage(skin=appLayout$dashboardColour,
 
 
 server <- function(input, output, session) {
-
+  
+  options(warn=-1)
   cat("~~~ Starting server ~~~", fill=T)
   cost_data <- new("costData")
   cost_data <- readRDS(cost_data, "./data/cost.rds")
@@ -242,6 +245,7 @@ server <- function(input, output, session) {
   dataList <- list("CostDensity"=cost,"Cost"=cost, "copdNumber"=copdNumber)
   canMap <- new("canadaMap", filename=mapSettings1$filename, initialize=FALSE)
   group_prev <<- "new"
+  group_prev2 <<- "new"
   
   
   observe({
@@ -251,8 +255,8 @@ server <- function(input, output, session) {
         mapSettings = mapSettings1
       } else {mapSettings = mapSettings2}
       group = input$map_groups
-      print(group)
-      print(input$map_groups_baselayerchange)
+      sout("test", group)
+      sout(input$map_groups_baselayerchange)
       group = group[-which(group=="basemap")]
       print(length(group))
       if(length(group)==1){
@@ -351,23 +355,58 @@ server <- function(input, output, session) {
       })
         cat("~~~ Setting up Info Boxes ~~~", fill=T)
         cat(paste0("Number of Boxes = ", settings$numberOfBoxes), fill=T)
+        mapShapeClick <- paste0(mapId, "_shape_click")
+        changeLayer <- paste0(mapId, "_groups_baselayerchange")
+        value <- reactiveValues(default = "Alberta", layer=1)
+        observe({
+          if(!is.null(input$map_groups)){
+            if(grepl("cost",input$selectedTab)){
+              mapSettings = mapSettings1
+            } else {mapSettings = mapSettings2}
+            group2 = input$map_groups
+            group2 = group2[-which(group2=="basemap")]
+            if(length(group2)!=1){
+              group_prev2 <<- group2
+            }else{
+              group2 = c(setdiff(group_prev2, group2), setdiff(group2, group_prev2))
+              group_prev2 <<- group2
+            }
+            sout("Group", group_prev2)
+            g2 = which(mapSettings$groups!=group_prev2)
+            value$layer <- g2
+            sout("Layer: ",value$layer)
+          }
+          
+          
+        })
         lapply(1:settings$numberOfBoxes, function(box){
           boxId <- paste0(settings$boxLabel, box)
-          mapShapeClick <- paste0(mapId, "_shape_click")
-          value <- reactiveValues(default = "Alberta")
+          
           observeEvent(input[[mapShapeClick]],{
             value$default <- input[[mapShapeClick]]$id
           })
+
+ 
          
         output[[boxId]] <- renderValueBox({
           if(value$default=="Alberta"){
             layer <- 1
             groupid <- "group11"
-          } else{
+          } else {
+              if(length(value$layer)!=1){
+                layer <- 1
+              } else{
+                layer <- value$layer
+              }
           province <- eventReactive(input[[mapShapeClick]], { # update the location selectInput on map clicks
             input[[mapShapeClick]]$id
           })
-          groupid <- province()
+            groupid <- province()
+
+            
+              #layer <- as.numeric(substr(groupid, 6,6))
+     
+            
           }
           mapDataList <- p()
           map <- CreateMap$new(layers=mapSettings$layers,
@@ -376,10 +415,8 @@ server <- function(input, output, session) {
           map$setupMap()
           cat("Creating map", fill=T)
           
-          print(groupid)
+          sout(groupid)
           
-          layer <- as.numeric(substr(groupid, 6,6))
-          print(layer)
           prov <- as.numeric(substr(groupid,7,9))
           print(prov)
           mapLayer <- map$mapDataList[[layer]]

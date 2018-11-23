@@ -10,10 +10,10 @@ AppLayout <- R6Class(
     numberOfTabs = NULL,
     appTitle = NULL,
     dashboard = TRUE,
-    dashboardColour = "posy",
+    dashboardColour = "cg-blue",
     
     initialize = function(numberOfTabs, appTitle, 
-                          dashboard=T, dashboardColour="posy"){
+                          dashboard=T, dashboardColour="cg-blue"){
       
       
       self$numberOfTabs <- numberOfTabs
