@@ -9,8 +9,8 @@
 
 library(shiny)
 library(shinythemes)
-library(shinydashboard)
-#library(shinyjs)
+library(shinydashboard2)
+library(devtools)
 library(ggplot2)
 library(plotly)
 library(scales)
@@ -24,11 +24,13 @@ library(leaflet)
 
 source("./R/Cost.R")
 source("./R/Census.R")
-source("./R/Map.R")
+source("./R/MapData.R")
+source("./R/CreateMap.R")
 source("./R/initialize.R")
 source("./R/settings.R")
 source("./R/MetaData.R")
 source("./R/helper_functions.R")
+source("./R/AppLayout.R")
 
 load(file="./data/metaData.RData")
 print(metaData)
@@ -43,26 +45,32 @@ choices_cost <- list("Total" = "sum",
                      "Pharma" = "pharm")
 s_tabs = c(2,3)
 colors <- c("olive", "purple", "maroon", "aqua")
+colors <- c("ink", "posy", "embers", "black")
+colors <- c("ink", "steel-blue", "cobalt-blue", "posy")
 iconBox <- list(icon("user", lib="font-awesome"), icon("usd", lib="font-awesome"))
 tab_titles = metaData@tab_titles
 i=1
 num_inputs <- length(ids)
+appLayout <- AppLayout$new(6, "burdenOfCOPD")
 initialize = TRUE
-
+cat("~~~ Starting UI ~~~", fill=T)
 
 # Define UI for application that draws a histogram
-ui <- dashboardPage(skin="blue",
+ui <- dashboardPage(skin=appLayout$dashboardColour,
+  
   # header
   dashboardHeader(title=metaData@app_title, titleWidth=320),
   # sidebar
   dashboardSidebar(
     sidebarMenu(id="selectedTab",
       menuItem("Cost", tabName = "costTab", icon = icon("dollar sign", lib="font-awesome"),
-               menuSubItem("Graph", tabName="costSubTabGraph", icon=icon("bar-chart", lib="font-awesome")),
-               menuSubItem("Map", tabName="costSubTabMap",icon=icon("globe americas", lib="font-awesome"))),
+               menuSubItem("Map", tabName="costSubTabMap",icon=icon("globe americas", lib="font-awesome")),
+               menuSubItem("Graph", tabName="costSubTabGraph", icon=icon("bar-chart", lib="font-awesome"))),
+               
       menuItem("Prevalence", tabName = "casesTab", icon = icon("sort numeric up", lib="font-awesome"),
-               menuSubItem("Graph", tabName="casesSubTabGraph",icon=icon("bar-chart", lib="font-awesome")),
-               menuSubItem("Map", tabName="casesSubTabMap",icon=icon("globe americas", lib="font-awesome"))),
+               menuSubItem("Map", tabName="casesSubTabMap",icon=icon("globe americas", lib="font-awesome")),
+               menuSubItem("Graph", tabName="casesSubTabGraph",icon=icon("bar-chart", lib="font-awesome"))),
+               
 
       menuItem("About", tabName = "aboutTab", icon = icon("address-book", lib="font-awesome")),
       menuItem("Terms", tabName = "termsTab", icon = icon("balance-scale", lib="font-awesome"))
@@ -71,62 +79,14 @@ ui <- dashboardPage(skin="blue",
   # body
   dashboardBody(
     shinyjs::useShinyjs(),
+    
     tabItems(
     
-    # tab1
-    tabItem(tabName="costSubTabGraph",
-              
-              # TabBox --> Box
-              box(width=12,status="info",
-                  # AppBrick --> SideBarLayout
-                  sidebarLayout(
-                        
-                    sidebarPanel(
-                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[1],"3"), 
-                                       label=metaData@sidebar_titles[1],
-                                       choices=metaData@sidebar_choices_short[[1]],
-                                       selected=metaData@sidebar_choices_short[[1]]$all),
-                          shinyjs::hidden(div(id=paste0(ids[1],"3"),
-                                          checkboxGroupInput(paste0(metaData@sidebar_labels[1], "3"),
-                                                             label = NA,
-                                                             choices = metaData@sidebar_choices_long[[1]],
-                                                             selected = metaData@sidebar_choices_long[[1]]$all))),
-                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[2],"3"), 
-                                       label=metaData@sidebar_titles[2],
-                                       choices=metaData@sidebar_choices_short[[2]],
-                                       selected=metaData@sidebar_choices_short[[2]]$all),
-                          shinyjs::hidden(div(id=paste0(ids[2],"3"),
-                                          checkboxGroupInput(paste0(metaData@sidebar_labels[2], "3"),
-                                                             label = NA,
-                                                             choices = metaData@sidebar_choices_long[[2]],
-                                                             selected = metaData@sidebar_choices_long[[2]]$all))),
-                          radioButtons(inputId=paste0("radio", metaData@sidebar_labels[3],"3"), 
-                                       label=metaData@sidebar_titles[3],
-                                       choices=metaData@sidebar_choices_short[[3]],
-                                       selected=metaData@sidebar_choices_short[[3]]$all),
-                          shinyjs::hidden(div(id=paste0(ids[3],"3"),
-                                          checkboxGroupInput(paste0(metaData@sidebar_labels[3], "3"),
-                                                             label = NA,
-                                                             choices = metaData@sidebar_choices_long[[3]],
-                                                             selected = metaData@sidebar_choices_long[[3]]$all)))
-                          
-                        ),
-                        mainPanel(
-                          selectizeInput(inputId="costType",
-                                         label="",
-                                         options = list(style="z-index:100;"),
-                                         choices = choices_cost,
-                                         selected = c("sum")),
-                          plotlyOutput(metaData@tab_settings[[1]]$label[2]),
-                               
-                                  div(id = "SaveLoad",downloadButton(metaData@tab_settings[[1]]$label[3], 
-                                                                     metaData@tab_settings[[1]]$title[3]))))
-                      )),
-            # tab2
+
+            # Tab tab1
             tabItem(tabName="casesSubTabMap",
                     # TabBox --> Box
-                    box(solidHeader=TRUE, 
-                        title="COPD Cases by Map",
+                    box(solidHeader=FALSE, 
                         status="info",
                         # TabBox --> ValueBoxOutput
                         valueBoxOutput("box01"),
@@ -149,6 +109,55 @@ ui <- dashboardPage(skin="blue",
                                     animate = animationOptions(interval = 300,
                                                                loop = FALSE)),
                         width=12, height=6)),
+            # Tab tab2
+            tabItem(tabName="costSubTabGraph",
+                    
+                    # TabBox --> Box
+                    box(width=12,status="info",
+                        # AppBrick --> SideBarLayout
+                        sidebarLayout(
+                          
+                          sidebarPanel(
+                            radioButtons(inputId=paste0("radio", metaData@sidebar_labels[1],"3"), 
+                                         label=metaData@sidebar_titles[1],
+                                         choices=metaData@sidebar_choices_short[[1]],
+                                         selected=metaData@sidebar_choices_short[[1]]$all),
+                            shinyjs::hidden(div(id=paste0(ids[1],"3"),
+                                                checkboxGroupInput(paste0(metaData@sidebar_labels[1], "3"),
+                                                                   label = NA,
+                                                                   choices = metaData@sidebar_choices_long[[1]],
+                                                                   selected = metaData@sidebar_choices_long[[1]]$all))),
+                            radioButtons(inputId=paste0("radio", metaData@sidebar_labels[2],"3"), 
+                                         label=metaData@sidebar_titles[2],
+                                         choices=metaData@sidebar_choices_short[[2]],
+                                         selected=metaData@sidebar_choices_short[[2]]$all),
+                            shinyjs::hidden(div(id=paste0(ids[2],"3"),
+                                                checkboxGroupInput(paste0(metaData@sidebar_labels[2], "3"),
+                                                                   label = NA,
+                                                                   choices = metaData@sidebar_choices_long[[2]],
+                                                                   selected = metaData@sidebar_choices_long[[2]]$all))),
+                            radioButtons(inputId=paste0("radio", metaData@sidebar_labels[3],"3"), 
+                                         label=metaData@sidebar_titles[3],
+                                         choices=metaData@sidebar_choices_short[[3]],
+                                         selected=metaData@sidebar_choices_short[[3]]$all),
+                            shinyjs::hidden(div(id=paste0(ids[3],"3"),
+                                                checkboxGroupInput(paste0(metaData@sidebar_labels[3], "3"),
+                                                                   label = NA,
+                                                                   choices = metaData@sidebar_choices_long[[3]],
+                                                                   selected = metaData@sidebar_choices_long[[3]]$all)))
+                            
+                          ),
+                          mainPanel(
+                            selectizeInput(inputId="costType",
+                                           label="",
+                                           options = list(style="z-index:100;"),
+                                           choices = choices_cost,
+                                           selected = c("sum")),
+                            plotlyOutput(metaData@tab_settings[[1]]$label[2]),
+                            
+                            div(id = "SaveLoad",downloadButton(metaData@tab_settings[[1]]$label[3], 
+                                                               metaData@tab_settings[[1]]$title[3]))))
+                    )),
             # Tab
              tabItem(tabName="casesSubTabGraph",
                      # TabBox --> Box
@@ -223,7 +232,9 @@ ui <- dashboardPage(skin="blue",
                        
 
 server <- function(input, output, session) {
-
+  
+  options(warn=-1)
+  cat("~~~ Starting server ~~~", fill=T)
   cost_data <- new("costData")
   cost_data <- readRDS(cost_data, "./data/cost.rds")
   cost <- cost_data@data
@@ -233,6 +244,7 @@ server <- function(input, output, session) {
   dataList <- list("CostDensity"=cost,"Cost"=cost, "copdNumber"=copdNumber)
   canMap <- new("canadaMap", filename=mapSettings1$filename, initialize=FALSE)
   group_prev <<- "new"
+  group_prev2 <<- "new"
   
   
   observe({
@@ -242,8 +254,8 @@ server <- function(input, output, session) {
         mapSettings = mapSettings1
       } else {mapSettings = mapSettings2}
       group = input$map_groups
-      print(group)
-      print(input$map_groups_baselayerchange)
+      sout("test", group)
+      sout(input$map_groups_baselayerchange)
       group = group[-which(group=="basemap")]
       print(length(group))
       if(length(group)==1){
@@ -329,11 +341,11 @@ server <- function(input, output, session) {
         output[[mapId]] <- renderLeaflet({
           
           mapDataList <- p()
-          map <- new("createMap", layers=mapSettings$layers,
+          map <- CreateMap$new(layers=mapSettings$layers,
                      groups = mapSettings$groups, legendLabels=mapSettings$legendLabels,
                      mapDataList=mapDataList)
-          map <- setupMap(map)
-          mapRender <- drawMap(map)
+          map$setupMap()
+          mapRender <- map$drawMap()
           mapRender <- mapRender %>% htmlwidgets::onRender("function(el, x) {
                                                L.control.zoom({ position: 'topright' }).addTo(this)
         }") 
@@ -342,33 +354,76 @@ server <- function(input, output, session) {
       })
         cat("~~~ Setting up Info Boxes ~~~", fill=T)
         cat(paste0("Number of Boxes = ", settings$numberOfBoxes), fill=T)
+        mapShapeClick <- paste0(mapId, "_shape_click")
+        changeLayer <- paste0(mapId, "_groups_baselayerchange")
+        value <- reactiveValues(default = "Alberta", layer=1)
+        observe({
+          if(!is.null(input$map_groups)){
+            if(grepl("cost",input$selectedTab)){
+              mapSettings = mapSettings1
+            } else {mapSettings = mapSettings2}
+            group2 = input$map_groups
+            group2 = group2[-which(group2=="basemap")]
+            if(length(group2)!=1){
+              group_prev2 <<- group2
+            }else{
+              group2 = c(setdiff(group_prev2, group2), setdiff(group2, group_prev2))
+              group_prev2 <<- group2
+            }
+            sout("Group", group_prev2)
+            g2 = which(mapSettings$groups!=group_prev2)
+            value$layer <- g2
+            sout("Layer: ",value$layer)
+          }
+          
+          
+        })
         lapply(1:settings$numberOfBoxes, function(box){
           boxId <- paste0(settings$boxLabel, box)
-          mapShapeClick <- paste0(mapId, "_shape_click")
+          
+          observeEvent(input[[mapShapeClick]],{
+            value$default <- input[[mapShapeClick]]$id
+          })
+
+ 
+         
         output[[boxId]] <- renderValueBox({
+          if(value$default=="Alberta"){
+            layer <- 1
+            groupid <- "group11"
+          } else {
+              if(length(value$layer)!=1){
+                layer <- 1
+              } else{
+                layer <- value$layer
+              }
           province <- eventReactive(input[[mapShapeClick]], { # update the location selectInput on map clicks
             input[[mapShapeClick]]$id
           })
-          
+            groupid <- province()
+
+            
+              #layer <- as.numeric(substr(groupid, 6,6))
+     
+            
+          }
           mapDataList <- p()
-          map <- new("createMap", layers=mapSettings$layers,
+          map <- CreateMap$new(layers=mapSettings$layers,
                      groups = mapSettings$groups, legendLabels=mapSettings$legendLabels,
                      mapDataList=mapDataList)
-          map <- setupMap(map)
+          map$setupMap()
           cat("Creating map", fill=T)
-          groupid <- province()
-          print(groupid)
           
-          layer <- as.numeric(substr(groupid, 6,6))
-          print(layer)
+          sout(groupid)
+          
           prov <- as.numeric(substr(groupid,7,9))
           print(prov)
-          mapLayer <- map@mapDataList[[layer]]
+          mapLayer <- map$mapDataList[[layer]]
           print(mapLayer@costYear)
           
           print(settings$treatmentType[box])
           print(settings$treatmentType)
-          typeList <- costType(map, layer, settings$treatmentType[box], TRUE, mapSettings$dense[layer])
+          typeList <- map$costType(layer, settings$treatmentType[box], TRUE, mapSettings$dense[layer])
           print(typeList)
           print(settings$treatmentType[box])
           if(box==4){
@@ -377,9 +432,14 @@ server <- function(input, output, session) {
           } else{
             subtitle = settings$treatmentTypeTitles[box]
           }
+          if(typeList$labels[prov]==0 || typeList$labels[prov]=="No data"){
+            value = "No data"
+          } else {
+            value = paste0(settings$boxPrefix, typeList$labels[prov])
+          }
 
           valueBox(
-            value = paste0(settings$boxPrefix, typeList$labels[prov]),
+            value = value,
             subtitle = subtitle,
             color = colors[box],
             icon = iconBox[[layer]]

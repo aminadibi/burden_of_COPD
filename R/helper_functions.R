@@ -168,7 +168,17 @@ mapIcons <- function(total, inpatient, outpatient, pharm, province){
     iconList[paste0(fillType, "Number")] = fill[i]
   }
   return(iconList)
+}
+
+sout <- function(...){
+  arguments <- list(...)
+  string <- ""
+  for(arg in arguments){
+    string <- paste0(string, " ", arg)
   }
+  cat(string, fill=TRUE)
+  
+}
 
 
 
