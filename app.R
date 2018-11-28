@@ -44,9 +44,9 @@ choices_cost <- list("Total" = "sum",
                      "Outpatient" = "MSP",
                      "Pharma" = "pharm")
 s_tabs = c(2,3)
-colors <- c("olive", "purple", "maroon", "aqua")
-colors <- c("ink", "posy", "embers", "black")
-colors <- c("ink", "steel-blue", "cobalt-blue", "posy")
+# colors <- c("olive", "purple", "maroon", "aqua")
+# colors <- c("ink", "posy", "embers", "black")
+
 iconBox <- list(icon("user", lib="font-awesome"), icon("usd", lib="font-awesome"))
 tab_titles = metaData@tab_titles
 i=1
@@ -89,10 +89,8 @@ ui <- dashboardPage(skin=appLayout$dashboardColour,
                     box(solidHeader=FALSE, 
                         status="info",
                         # TabBox --> ValueBoxOutput
-                        valueBoxOutput("box01"),
-                        valueBoxOutput("box02"),
-                        valueBoxOutput("box03"),
-                        valueBoxOutput("box04", width=12),
+                        valueBoxOutput("box01", width=4),
+                        valueBoxOutput("box02", width=8),
                         # AppBrick --> MapBrick
                         leafletOutput(outputId="map2",
                                                     width="100%"), 
@@ -203,7 +201,8 @@ ui <- dashboardPage(skin=appLayout$dashboardColour,
                   valueBoxOutput("box1"),
                   valueBoxOutput("box2"),
                   valueBoxOutput("box3"),
-                  valueBoxOutput("box4", width=12),
+                  valueBoxOutput("box4", width=4),
+                  valueBoxOutput("box5", width=8),
             box(status="info",
                 # AppBrick --> MapBrick
                 leafletOutput(outputId="map",
@@ -241,7 +240,7 @@ server <- function(input, output, session) {
   copdNumber <- read_rds("./data/copdNumber.rds")
   
   buttonremove <- list("sendDataToCloud", "lasso2d", "pan2d" , "zoom2d", "hoverClosestCartesian")
-  dataList <- list("CostDensity"=cost,"Cost"=cost, "copdNumber"=copdNumber)
+  #dataList <- list("CostDensity"=cost,"Cost"=cost, "copdNumber"=copdNumber)
   canMap <- new("canadaMap", filename=mapSettings1$filename, initialize=FALSE)
   group_prev <<- "new"
   group_prev2 <<- "new"
@@ -333,10 +332,15 @@ server <- function(input, output, session) {
         cat(settings$functions[l], fill=T)
         cat(settings$label[[k]])
         mapId = settings$label[[k]]
-        if(mapId=="map2"){mapSettings = mapSettings2}else{
+        if(mapId=="map2"){
+          mapSettings = mapSettings2
+          dataList <- list("copdNumber"=copdNumber)
+        }else{
           mapSettings = mapSettings1
+          dataList <- list("CostDensity"=cost,"Cost"=cost)
+          
         }
-        p <- reactive({do.call(settings$functions[l], args=list(mapSettings))})
+        p <- reactive({do.call(settings$functions[l], args=list(mapSettings, dataList))})
         
         output[[mapId]] <- renderLeaflet({
           
@@ -420,20 +424,34 @@ server <- function(input, output, session) {
           print(prov)
           mapLayer <- map$mapDataList[[layer]]
           print(mapLayer@costYear)
+          totalBox = mapSettings$totalBox
+          types = mapSettings$types
+          colors = mapSettings$colors
           
           print(settings$treatmentType[box])
           print(settings$treatmentType)
-          typeList <- map$costType(layer, settings$treatmentType[box], TRUE, mapSettings$dense[layer])
+          if(box==totalBox+1){
+            subBox = totalBox
+          } else {
+            subBox = box
+          }
+          typeList <- map$costType(layer, settings$treatmentType[subBox], types, mapSettings$dense[layer])
           print(typeList)
           print(settings$treatmentType[box])
-          if(box==4){
-            subtitle = paste0(settings$treatmentTypeTitles[box], typeList$provinces[prov], 
-                              settings$boxSuffix[layer])
-          } else{
+          
+          if(box==totalBox){
+            # subtitle = paste0(settings$treatmentTypeTitles[box], typeList$provinces[prov], 
+            #                   settings$boxSuffix[layer])
+            subtitle = paste0(settings$treatmentTypeTitles[box], settings$boxSuffix[layer])
+          } else if(box==totalBox+1){
+            subtitle = "Province"
+            } else {
             subtitle = settings$treatmentTypeTitles[box]
           }
           if(typeList$labels[prov]==0 || typeList$labels[prov]=="No data"){
             value = "No data"
+          } else if(box==totalBox+1){
+            value = paste0(typeList$provinces[prov])
           } else {
             value = paste0(settings$boxPrefix, typeList$labels[prov])
           }
@@ -513,7 +531,7 @@ server <- function(input, output, session) {
     
   }
   
-  getMapData <- function(mapSettings){
+  getMapData <- function(mapSettings, dataList){
     
     genderCheck <- "all genders"
     ageGroupCheck <- "all ages"

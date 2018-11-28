@@ -18,7 +18,10 @@ mapSettings1 <- list(filename = "./static_data/canadaMap.RData",
                      digits = c(-1, -5),
                      dense = c(TRUE, FALSE),
                      legendLabels = c("legend1", "legend2"),
-                     prefix=c("$", "$")
+                     prefix=c("$", "$"),
+                     types=TRUE,
+                     totalBox = 4,
+                     colors = c("ink", "steel-blue", "cobalt-blue", "posy", "posy")
 )
 mapSettings2 <- list(filename = "./static_data/canadaMap.RData",
                     #palette = c("brewer"="Greens"),
@@ -27,8 +30,11 @@ mapSettings2 <- list(filename = "./static_data/canadaMap.RData",
                     mapDataList = list("copdNumber"=0),
                     groups = c("Number of COPD"),
                     plotLabels = c("COPD Cases per Year: "),
-                    digits = c(0),
-                    dense = c(TRUE),
+                    digits = c(-3),
+                    dense = c(FALSE),
                     legendLabels = c("legend3"),
-                    prefix=c("")
+                    prefix=c(""),
+                    types = FALSE,
+                    totalBox = 1,
+                    colors = c("posy", "posy")
 )

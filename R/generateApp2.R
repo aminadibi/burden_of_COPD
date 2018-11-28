@@ -25,9 +25,9 @@ choices_cost <- list("Total" = "sum",
                      "Pharma" = "pharm")
 
 tab3 <- c("plotlyOutput", "download")
-tab2 <- c("selectInput","infoBox","infoBox","infoBox","infoBox", "leafletOutput", "sliderInput")
+tab2 <- c("selectInput","infoBox","infoBox","infoBox","infoBox","infoBox", "leafletOutput", "sliderInput")
 tab1 <- c("selectInput", "plotlyOutput", "download")
-tab4 <- c("infoBox","infoBox","infoBox","infoBox","leafletOutput", "sliderInput")
+tab4 <- c("infoBox","infoBox", "leafletOutput", "sliderInput")
 tab6 <- c("markdown")
 tab5 <- c("markdown", "image")
 tab2input <- c("costTypeMap", "sliderYear")
@@ -36,14 +36,15 @@ tab3input <- c("plot_n_COPD")
 tab1input <- c()
 tab5input <- c()
 tab6input <- c()
-tab2id <- list("label" = c("costTypeMap","box1","box2", "box3","box4", "map", "sliderYear"),
-               "title" = c("Cost Map", "","","","","", "Year"),
+tab2id <- list("label" = c("costTypeMap","box1","box2", "box3","box4",
+                           "box5", "map", "sliderYear"),
+               "title" = c("Cost Map", "","","","","","", "Year"),
                "treatmentTypeTitles" = c("Inpatient", "Outpatient", "Medication", 
-                                         "Total Cost for "),
+                                         "Total Cost"),
                "treatmentType" = c("hosp", "MSP", "pharm", "sum"),
                "choices" = list(choices_cost),
                "selected" = c("sum"),
-               "numberOfBoxes" = 4,
+               "numberOfBoxes" = 5,
                "boxLabel"="box",
                "boxPrefix"="$",
                "tabNumber"=2,
@@ -70,18 +71,17 @@ tab1id <- list("label" = c("costType", "plot_cost", "download_plot_cost"),
                "selected" = c("sum"),
                "png_name"="COPD_Projected_cost_",
                "functions"=c("cost_plot"))
-tab4id <- list("label" = c("box01","box02", "box03","box04","map2", "sliderYear2"),
-               "title" = c("","","","", "Case Map", "", "Year"),
+tab4id <- list("label" = c("box01","box02", "map2", "sliderYear2"),
+               "title" = c("","", "Case Map", "", "Year"),
                "choices" = list(choices_cost),
-               "numberOfBoxes"=4,
+               "numberOfBoxes"=2,
                "tabNumber"=4,
                "treatmentType" = c("hosp", "MSP", "pharm", "sum"),
-               "treatmentTypeTitles" = c("Inpatient", "Outpatient", "Medication", 
-                                         "Total Cases in "),
+               "treatmentTypeTitles" = c("Total Cases"),
                "selected" = c("sum"),
                "boxLabel" = "box0",
                "boxPrefix"="",
-               "boxSuffix" = c(" per Capita"),
+               "boxSuffix" = c(""),
                "sliderSettings" = list("min"=2015,
                                        "max"=2030,
                                        "value"=2015,
