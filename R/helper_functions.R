@@ -71,7 +71,7 @@ customLegend <- function(x){
 
 myLabFormat <- function(
   prefix = "", suffix = "", between = " &ndash; ", digits = 3, big.mark = ",",
-  transform = identity
+  transform = identity, scientific=FALSE
 ) {
   
   formatNum <- function(x) {
@@ -79,6 +79,8 @@ myLabFormat <- function(
    
     if(max(x)>1000000){
       x <- costToMill(x, char=TRUE)
+    } else {
+      x <- format(x, scientific=scientific)
     }
 
     return(x)

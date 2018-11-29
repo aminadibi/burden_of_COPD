@@ -208,7 +208,7 @@ ui <- dashboardPage(skin=appLayout$dashboardColour,
                 leafletOutput(outputId="map",
                               width="100%"),
                 # AppBrick --> SliderInput
-                sliderInput(inputId="sliderYear",label="Year", 
+                sliderInput(inputId="sliderYear1",label="Year", 
                             width="100%",
                             min=2015,
                             max=2030,
@@ -335,12 +335,15 @@ server <- function(input, output, session) {
         if(mapId=="map2"){
           mapSettings = mapSettings2
           dataList <- list("copdNumber"=copdNumber)
+          mapNum = 2
+          
         }else{
           mapSettings = mapSettings1
           dataList <- list("CostDensity"=cost,"Cost"=cost)
-          
+          mapNum = 1
         }
-        p <- reactive({do.call(settings$functions[l], args=list(mapSettings, dataList))})
+        
+        p <- reactive({do.call(settings$functions[l], args=list(mapSettings, dataList, mapNum))})
         
         output[[mapId]] <- renderLeaflet({
           
@@ -349,7 +352,8 @@ server <- function(input, output, session) {
                      groups = mapSettings$groups, legendLabels=mapSettings$legendLabels,
                      mapDataList=mapDataList)
           map$setupMap()
-          mapRender <- map$drawMap()
+          
+          mapRender <- map$drawMap(1)
           mapRender <- mapRender %>% htmlwidgets::onRender("function(el, x) {
                                                L.control.zoom({ position: 'topright' }).addTo(this)
         }") 
@@ -471,7 +475,14 @@ server <- function(input, output, session) {
         )
       })
 
-  
+  getLayer <- function(mapSettings, group){
+    if(!is.null(input$map_groups)){
+      g = which(mapSettings$groups!=group)
+      layer = g} else{
+        layer = 1
+      }
+    return(layer)
+  }
   cost_plot <- function(){
     
     cat("~~~ Making Cost Plot ~~~", fill=T)
@@ -531,11 +542,12 @@ server <- function(input, output, session) {
     
   }
   
-  getMapData <- function(mapSettings, dataList){
+  getMapData <- function(mapSettings, dataList, mapNum){
     
     genderCheck <- "all genders"
     ageGroupCheck <- "all ages"
-    yearCheck <- input$sliderYear
+    sliderYear = paste0("sliderYear", mapNum)
+    yearCheck <- input[[sliderYear]]
     noType <- TRUE
     
     mapDataList <- mapSettings$mapDataList
