@@ -77,7 +77,7 @@ CreateMap <- R6Class(
       invisible(self)
     },
     
-    drawMap = function(){
+    drawMap = function(showLayer){
       m <- leaflet(options=leafletOptions(zoomControl=FALSE),
                    width="50%") %>% setView(lng = -100, lat = 60, zoom = 3)%>%
         addTiles(group="basemap")
@@ -119,7 +119,9 @@ CreateMap <- R6Class(
       }
       m <- m %>% addLayersControl(overlayGroups = c(self$groups),
                                   options = layersControlOptions(collapsed=FALSE)) 
-      if(self$layers>1){m <- m %>% hideGroup(self$groups[2:self$layers])}
+      allLayers = seq(1,self$layers)
+      hiddenLayers = allLayers[-showLayer]
+      if(self$layers>1){m <- m %>% hideGroup(self$groups[hiddenLayers])}
       
       #                 htmlwidgets::onRender("
       #   function(el, x) {
